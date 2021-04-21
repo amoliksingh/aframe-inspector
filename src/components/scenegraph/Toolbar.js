@@ -83,7 +83,7 @@ export default class Toolbar extends React.Component {
    */
   writeChanges = () => {
     const baseUrl = "http://localhost:8888/";
-    const apiEndpointScene = "3";
+    const apiEndpointScene = AFRAME.scenes[0].getAttribute("id").replace("-scene", "");
     const apiEndpoint = "api/admin/v1/scene/";
     const getUrl = baseUrl + apiEndpoint + apiEndpointScene;
     let objects = [];
@@ -98,7 +98,6 @@ export default class Toolbar extends React.Component {
         })
         .then(function (response) {
           objects = response.data.objects;
-          console.log(objects);
           for(var id in AFRAME.INSPECTOR.history.updates)
             objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
           objectChanges.sort();
@@ -109,11 +108,11 @@ export default class Toolbar extends React.Component {
               let curChanges = objectChanges[j][1];
               for (const prop in curChanges){
                 objects[i][prop] = curChanges[prop].split(" ").map(Number);
-                const putUrl = getUrl + "/object/" + objects[i].id;
-                delete objects[i].id;
-                delete objects[i].asset_details;
-                updateObject(putUrl, objects[i]);
               }
+              const putUrl = getUrl + "/object/" + objects[i].id;
+              delete objects[i].id;
+              delete objects[i].asset_details;
+              updateObject(putUrl, objects[i]);
               j++;
             }
             i++;
