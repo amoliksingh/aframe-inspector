@@ -60,8 +60,38 @@ export default class Toolbar extends React.Component {
     super(props);
 
     this.state = {
-      isPlaying: false
+      isPlaying: false,
+      objects: []
     };
+    this.setObjects(this);
+  }
+
+  setObjects(refToThis){
+    const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
+    const apiEndpointScene = AFRAME.scenes[0].getAttribute("id").replace("-scene", "");
+    const apiEndpoint = process.env.REACT_APP_ADMIN_API_ENDPOINT;
+    const getUrl = baseUrl + apiEndpoint + apiEndpointScene;
+    let objects = [];
+    axios.get(getUrl, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+    .catch((error) => {
+      if (error.response){
+        alert("URL: " + getUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      } else if (error.request){
+        alert("No response from URL: " + getUrl);
+      } else{
+        alert(error.message);
+      }
+      refToThis.setState({ objects });
+    })
+    .then(function (response) {
+      objects = response.data.objects;
+      console.log(objects);
+      refToThis.setState({ objects });
+    });
   }
 
   exportSceneToGLTF() {
@@ -88,48 +118,28 @@ export default class Toolbar extends React.Component {
    * Try to write changes with aframe-inspector-watcher.
    */
   writeChanges = () => {
-    const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
-    const apiEndpointScene = AFRAME.scenes[0].getAttribute("id").replace("-scene", "");
-    const apiEndpoint = process.env.REACT_APP_ADMIN_API_ENDPOINT;
-    const getUrl = baseUrl + apiEndpoint + apiEndpointScene;
-    let objects = [];
+    let objects = this.state.objects;
+    console.log(objects);
     let objectChanges = [];
-    axios.get(getUrl, {
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
-        .catch((error) => {
-          if (error.response){
-            alert("URL: " + getUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
-          } else if (error.request){
-            alert("No response from URL: " + getUrl);
-          } else{
-            alert(error.message);
-          }
-        })
-        .then(function (response) {
-          objects = response.data.objects;
-          for(var id in AFRAME.INSPECTOR.history.updates)
-            objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
-          objectChanges.sort();
-          let i = 0;
-          let j = 0;
-          while(i < objects.length && j < objectChanges.length){
-            if (objects[i].id == objectChanges[j][0]){
-              let curChanges = objectChanges[j][1];
-              for (const prop in curChanges){
-                objects[i][prop] = curChanges[prop].split(" ").map(Number);
-              }
-              const putUrl = getUrl + "/object/" + objects[i].id;
-              delete objects[i].id;
-              delete objects[i].asset_details;
-              updateObject(putUrl, objects[i]);
-              j++;
-            }
-            i++;
-          }
-        });
+    for(var id in AFRAME.INSPECTOR.history.updates)
+      objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
+    objectChanges.sort();
+    let i = 0;
+    let j = 0;
+    while(i < objects.length && j < objectChanges.length){
+      if (objects[i].id == objectChanges[j][0]){
+        let curChanges = objectChanges[j][1];
+        for (const prop in curChanges){
+          objects[i][prop] = curChanges[prop].split(" ").map(Number);
+        }
+        const putUrl = getUrl + "/object/" + objects[i].id;
+        delete objects[i].id;
+        delete objects[i].asset_details;
+        updateObject(putUrl, objects[i]);
+        j++;
+      }
+      i++;
+    }
   };
 
   toggleScenePlaying = () => {
