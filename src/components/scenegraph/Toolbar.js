@@ -89,7 +89,6 @@ export default class Toolbar extends React.Component {
     })
     .then(function (response) {
       objects = response.data.objects;
-      console.log(objects);
       refToThis.setState({ objects });
     });
   }
@@ -119,7 +118,6 @@ export default class Toolbar extends React.Component {
    */
   writeChanges = () => {
     let objects = this.state.objects;
-    console.log(objects);
     let objectChanges = [];
     for(var id in AFRAME.INSPECTOR.history.updates)
       objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
