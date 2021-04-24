@@ -3,6 +3,7 @@ import React from 'react';
 import Events from '../../lib/Events.js';
 import { saveBlob, saveString } from '../../lib/utils';
 import axios from 'axios';
+require('dotenv').config();
 
 const LOCALSTORAGE_MOCAP_UI = 'aframeinspectormocapuienabled';
 
@@ -35,14 +36,19 @@ function slugify(text) {
 }
 
 async function updateObject(putUrl, object){
-  console.log(putUrl);
   axios.put(putUrl, object, {
       headers: {
           "Content-Type": "application/json",
       },
     })
     .catch((error) => {
-        throw error;
+      if (error.response){
+        alert("URL: " + putUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      } else if (error.request){
+        alert("No response from URL: " + putUrl);
+      } else{
+        alert(error.message);
+      }
     });
 }
 
@@ -82,9 +88,9 @@ export default class Toolbar extends React.Component {
    * Try to write changes with aframe-inspector-watcher.
    */
   writeChanges = () => {
-    const baseUrl = "http://localhost:8888/";
+    const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
     const apiEndpointScene = AFRAME.scenes[0].getAttribute("id").replace("-scene", "");
-    const apiEndpoint = "api/admin/v1/scene/";
+    const apiEndpoint = process.env.REACT_APP_ADMIN_API_ENDPOINT;
     const getUrl = baseUrl + apiEndpoint + apiEndpointScene;
     let objects = [];
     let objectChanges = [];
@@ -94,7 +100,13 @@ export default class Toolbar extends React.Component {
             },
         })
         .catch((error) => {
-            throw error;
+          if (error.response){
+            alert("URL: " + getUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+          } else if (error.request){
+            alert("No response from URL: " + getUrl);
+          } else{
+            alert(error.message);
+          }
         })
         .then(function (response) {
           objects = response.data.objects;

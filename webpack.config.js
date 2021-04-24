@@ -3,6 +3,7 @@ var childProcess = require('child_process');
 var path = require('path');
 var postcssImport = require('postcss-import');
 var webpack = require('webpack');
+const dotenv = require('dotenv');
 
 // Add HMR for development environments only.
 var entry = ['./src/index.js'];
@@ -28,6 +29,13 @@ function getBuildTimestamp () {
 
 var commitHash = childProcess.execSync('git rev-parse HEAD').toString();
 
+const env = dotenv.config().parsed;
+
+const envKeys = Object.keys(env).reduce((prev, next) => {
+  prev[`process.env.${next}`] = JSON.stringify(env[next]);
+  return prev;
+}, {});
+
 // Minification.
 var plugins = [
   new webpack.DefinePlugin({
@@ -39,6 +47,7 @@ var plugins = [
     COMMIT_HASH: JSON.stringify(commitHash)
 
   }),
+  new webpack.DefinePlugin( envKeys ),
   new webpack.EnvironmentPlugin(['NODE_ENV'])
 ];
 if (process.env.MINIFY === 'true') {
@@ -104,5 +113,8 @@ module.exports = {
   plugins: plugins,
   resolve: {
     modules: [path.join(__dirname, 'node_modules')]
-  }
+  },
+  node: {
+    fs: "empty"
+ }
 };
