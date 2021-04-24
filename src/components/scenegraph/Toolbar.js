@@ -117,6 +117,10 @@ export default class Toolbar extends React.Component {
    * Try to write changes with aframe-inspector-watcher.
    */
   writeChanges = () => {
+    const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
+    const apiEndpointScene = AFRAME.scenes[0].getAttribute("id").replace("-scene", "");
+    const apiEndpoint = process.env.REACT_APP_ADMIN_API_ENDPOINT;
+    const getUrl = baseUrl + apiEndpoint + apiEndpointScene;
     let objects = this.state.objects;
     let objectChanges = [];
     for(var id in AFRAME.INSPECTOR.history.updates)
