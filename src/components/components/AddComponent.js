@@ -23,6 +23,10 @@ export default class AddComponent extends React.Component {
       return option.value === componentName;
     })[0];
 
+    if(componentName === "gltf-model"){
+      prompt("AYO SEND THE URL NOW");
+    }
+
     if (AFRAME.components[componentName].multiple) {
       const id = prompt(
         `Provide an ID for this component (e.g., 'foo' for ${componentName}__foo).`
@@ -49,6 +53,9 @@ export default class AddComponent extends React.Component {
       })
       .sort()
       .map(function(value) {
+        if(value === "gltf-model"){
+          return { value: value, label: 'aaa-gltf-model', origin: 'loaded' };
+        }
         return { value: value, label: value, origin: 'loaded' };
       });
 
@@ -79,7 +86,7 @@ export default class AddComponent extends React.Component {
 
     return (
       <div id="addComponentContainer">
-        <p id="addComponentHeader">COMPONENTS</p>
+        <p id="addComponentHeader">COMPONnENTS</p>
         <Select
           id="addComponent"
           className="addComponent"
