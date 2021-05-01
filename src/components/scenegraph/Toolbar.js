@@ -61,17 +61,18 @@ export default class Toolbar extends React.Component {
 
     this.state = {
       isPlaying: false,
-      objects: []
+      objects: [],
+      linkToIdMap: null
     };
-    this.setObjects(this);
+    this.getRequests(this);
   }
 
-  setObjects(refToThis){
+  getRequests(self){
     const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
     const apiEndpointScene = AFRAME.scenes[0].getAttribute("id").replace("-scene", "");
-    const apiEndpoint = process.env.REACT_APP_ADMIN_API_ENDPOINT;
-    const getUrl = baseUrl + apiEndpoint + apiEndpointScene;
-    let objects = [];
+    const baseEndpoint = process.env.REACT_APP_ADMIN_BASE_ENDPOINT;
+
+    let getUrl = baseUrl + baseEndpoint + "scene/" + apiEndpointScene;
     axios.get(getUrl, {
         headers: {
             "Content-Type": "application/json",
@@ -85,11 +86,34 @@ export default class Toolbar extends React.Component {
       } else{
         alert(error.message);
       }
-      refToThis.setState({ objects });
     })
     .then(function (response) {
-      objects = response.data.objects;
-      refToThis.setState({ objects });
+      let objects = response.data.objects;
+      self.setState({ objects });
+    });
+
+    getUrl = baseUrl + baseEndpoint + "assets";
+    axios.get(getUrl, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+    .catch((error) => {
+      if (error.response){
+        alert("URL: " + getUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      } else if (error.request){
+        alert("No response from URL: " + getUrl);
+      } else{
+        alert(error.message);
+      }
+    })
+    .then(function (response) {
+      let assets = response.data.assets;
+      let linkToIdMap = new Map();
+      assets.forEach(function( item, index) {
+        linkToIdMap["http://localhost:8888/static/"+item.s3_key] = item.id;
+      });
+      self.setState({ linkToIdMap });
     });
   }
 
@@ -119,8 +143,8 @@ export default class Toolbar extends React.Component {
   writeChanges = () => {
     const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
     const apiEndpointScene = AFRAME.scenes[0].getAttribute("id").replace("-scene", "");
-    const apiEndpoint = process.env.REACT_APP_ADMIN_API_ENDPOINT;
-    const getUrl = baseUrl + apiEndpoint + apiEndpointScene;
+    const baseEndpoint = process.env.REACT_APP_ADMIN_BASE_ENDPOINT;
+    const getUrl = baseUrl + baseEndpoint + "scene/" + apiEndpointScene;
     let objects = this.state.objects;
     let objectChanges = [];
     for(var id in AFRAME.INSPECTOR.history.updates)
@@ -132,7 +156,11 @@ export default class Toolbar extends React.Component {
       if (objects[i].id == objectChanges[j][0]){
         let curChanges = objectChanges[j][1];
         for (const prop in curChanges){
-          objects[i][prop] = curChanges[prop].split(" ").map(Number);
+          if (prop == "position" || prop == "scale" || prop == "rotation"){
+            objects[i][prop] = curChanges[prop].split(" ").map(Number);
+          } else if (prop == "gltf-model"){
+            objects[i]["asset_id"] = this.state.linkToIdMap[curChanges[prop]];
+          }
         }
         const putUrl = getUrl + "/object/" + objects[i].id;
         delete objects[i].id;
