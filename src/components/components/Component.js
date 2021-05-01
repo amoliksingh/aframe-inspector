@@ -6,6 +6,9 @@ import Collapsible from '../Collapsible';
 import Clipboard from 'clipboard';
 import { getComponentClipboardRepresentation } from '../../lib/entity';
 import Events from '../../lib/Events';
+import Select from 'react-select';
+import { updateEntity } from '../../lib/entity';
+import axios from 'axios';
 
 const isSingleProperty = AFRAME.schema.isSingleProperty;
 
@@ -24,8 +27,40 @@ export default class Component extends React.Component {
     super(props);
     this.state = {
       entity: this.props.entity,
-      name: this.props.name
+      name: this.props.name,
+      nameToLinkMap: null,
+      nameList: []
     };
+    this.setObjects(this);
+  }
+
+  setObjects(self){
+    const getUrl = "http://localhost:8888/api/admin/v1/assets";
+    let assets = [];
+    axios.get(getUrl, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+    .catch((error) => {
+      if (error.response){
+        alert("URL: " + getUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      } else if (error.request){
+        alert("No response from URL: " + getUrl);
+      } else{
+        alert(error.message);
+      }
+    })
+    .then(function (response) {
+      assets = response.data.assets;
+      let nameToLinkMap = new Map();
+      let nameList = [];
+      assets.forEach(function( item, index) {
+        nameToLinkMap[item.name] = "http://localhost:8888/static/"+item.s3_key;
+        nameList.push(item.name);
+      });
+      self.setState({ nameToLinkMap, nameList });
+    });
   }
 
   componentDidMount() {
@@ -89,6 +124,20 @@ export default class Component extends React.Component {
     }
   };
 
+  selectOption = objName => {
+    let value = "http://localhost:8888/static/assets/dev/armchair.glb";
+    alert(objName);
+    if (objName === "Classroom"){
+      value = "http://localhost:8888/static/assets/dev/classroom.glb";
+    } else if (objName === "Sanitizer"){
+      value = "http://localhost:8888/static/assets/dev/sanitizer.gltf";
+    } else if (objName === "Living Room"){
+      value = "http://localhost:8888/static/assets/dev/living_room.glb";
+    }
+    value = this.state.nameToLinkMap[objName];
+    updateEntity.apply(this, [this.props.entity, this.props.name, value]);
+  }
+
   /**
    * Render propert(ies) of the component.
    */
@@ -98,36 +147,18 @@ export default class Component extends React.Component {
     if (isSingleProperty(componentData.schema)) {
       const componentName = this.props.name;
       let schema = AFRAME.components[componentName.split('__')[0]].schema;
-      schema.oneOf = 
-      [
-        {
-          properties: {
-            lorem: {
-              type: "string",
-            },
-          },
-          required: ["lorem"],
-        },
-        {
-          properties: {
-            ipsum: {
-              type: "string",
-            },
-          },
-          required: ["ipsum"],
-        },
-      ];
-      console.log("##############################", componentData);
-      console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-------", schema);
+
       return (
-        <PropertyRow
-          key={componentName}
-          name={componentName}
-          schema={schema}
-          data={componentData.data}
-          componentname={componentName}
-          isSingle={true}
-          entity={this.props.entity}
+        <Select
+          id="gltfModelSelect"
+          ref="select"
+          options={this.state.nameList}
+          simpleValue
+          clearable={true}
+          placeholder="Add component..."
+          noResultsText="No components found"
+          searchable={true}
+          onChange={this.selectOption}
         />
       );
     }

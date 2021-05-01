@@ -2,6 +2,8 @@ import classnames from 'classnames';
 import React from 'react';
 import Events from '../../lib/Events.js';
 import { saveBlob, saveString } from '../../lib/utils';
+import axios from 'axios';
+require('dotenv').config();
 
 const LOCALSTORAGE_MOCAP_UI = 'aframeinspectormocapuienabled';
 
@@ -33,6 +35,43 @@ function slugify(text) {
     .replace(/-+$/, ''); // Trim - from end of text
 }
 
+async function updateObject(putUrl, object){
+  axios.put(putUrl, object, {
+      headers: {
+          "Content-Type": "application/json",
+      },
+    })
+    .catch((error) => {
+      if (error.response){
+        alert("URL: " + putUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      } else if (error.request){
+        alert("No response from URL: " + putUrl);
+      } else{
+        alert(error.message);
+      }
+    });
+}
+
+async function addObject(postUrl, object){
+  axios.post(postUrl, object, {
+      headers: {
+          "Content-Type": "application/json",
+      },
+    })
+    .catch((error) => {
+      if (error.response){
+        alert("URL: " + postUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      } else if (error.request){
+        alert("No response from URL: " + postUrl);
+      } else{
+        alert(error.message);
+      }
+    })
+    .then(function (response) {
+      console.log(response);
+    });
+}
+
 /**
  * Tools and actions.
  */
@@ -41,8 +80,37 @@ export default class Toolbar extends React.Component {
     super(props);
 
     this.state = {
-      isPlaying: false
+      isPlaying: false,
+      objects: []
     };
+    this.setObjects(this);
+  }
+
+  setObjects(refToThis){
+    const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
+    const apiEndpointScene = AFRAME.scenes[0].getAttribute("id").replace("-scene", "");
+    const apiEndpoint = process.env.REACT_APP_ADMIN_API_ENDPOINT;
+    const getUrl = baseUrl + apiEndpoint + apiEndpointScene;
+    let objects = [];
+    axios.get(getUrl, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+    .catch((error) => {
+      if (error.response){
+        alert("URL: " + getUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      } else if (error.request){
+        alert("No response from URL: " + getUrl);
+      } else{
+        alert(error.message);
+      }
+      refToThis.setState({ objects });
+    })
+    .then(function (response) {
+      objects = response.data.objects;
+      refToThis.setState({ objects });
+    });
   }
 
   exportSceneToGLTF() {
@@ -69,13 +137,61 @@ export default class Toolbar extends React.Component {
    * Try to write changes with aframe-inspector-watcher.
    */
   writeChanges = () => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'http://localhost:51234/save');
-    xhr.onerror = () => {
-      alert('aframe-watcher not running. This feature requires a companion service running locally. npm install aframe-watcher to save changes back to file. Read more at supermedium.com/aframe-watcher');
-    };
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.send(JSON.stringify(AFRAME.INSPECTOR.history.updates));
+    const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
+    const apiEndpointScene = AFRAME.scenes[0].getAttribute("id").replace("-scene", "");
+    const apiEndpoint = process.env.REACT_APP_ADMIN_API_ENDPOINT;
+    const getUrl = baseUrl + apiEndpoint + apiEndpointScene;
+    let objects = this.state.objects;
+    let objectChanges = [];
+    for(var id in AFRAME.INSPECTOR.history.updates)
+      objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
+    objectChanges.sort();
+    let i = 0;
+    let j = 0;
+    while(i < objects.length && j < objectChanges.length){
+      if (objects[i].id == objectChanges[j][0]){
+        let curChanges = objectChanges[j][1];
+        for (const prop in curChanges){
+          if (prop == "position" || prop == "scale" || prop == "rotation"){
+            objects[i][prop] = curChanges[prop].split(" ").map(Number);
+          }
+        }
+        const putUrl = getUrl + "/object/" + objects[i].id;
+        delete objects[i].id;
+        delete objects[i].asset_details;
+        updateObject(putUrl, objects[i]);
+        j++;
+      }
+      i++;
+    }
+    while(j < objectChanges.length){
+      let basicObject = {
+        "position": [0.0, 0.0, 0.0],
+        "scale": [1.0, 1.0, 1.0],
+        "rotation": [0.0, 0.0, 0.0],
+        "asset_id": 1,
+        "next_objects": [
+          {
+            "id": 2,
+            "action": {
+              "type": "text",
+              "text_id": 1
+            }
+          }
+        ],
+        "is_interactable": false
+      }
+      let curChanges = objectChanges[j][1];
+      for (const prop in curChanges){
+        if (prop == "position" || prop == "scale" || prop == "rotation"){
+          basicObject[prop] = curChanges[prop].split(" ").map(Number);
+        }
+      }
+      console.log(basicObject);
+      const postUrl = getUrl + "/object";
+      addObject(postUrl, basicObject);
+      j++;
+    }
   };
 
   toggleScenePlaying = () => {
