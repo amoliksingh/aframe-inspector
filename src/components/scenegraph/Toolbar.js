@@ -155,26 +155,38 @@ export default class Toolbar extends React.Component {
     let j = 0;
     while(i < objects.length && j < objectChanges.length){
       if (objects[i].id == objectChanges[j][0]){
-        changedObjectsString = changedObjectsString + " (" + objects[i].name  + ", id: " + objects[i].id + "),";
+        let hasChanged = false;
         let curChanges = objectChanges[j][1];
         for (const prop in curChanges){
           if (prop == "position" || prop == "scale" || prop == "rotation"){
-            objects[i][prop] = curChanges[prop].split(" ").map(Number);
+            const newPropArr = curChanges[prop].split(" ").map(Number);
+            if (JSON.stringify(objects[i][prop]) != JSON.stringify(newPropArr)){
+              hasChanged = true;
+              objects[i][prop] = newPropArr;
+            }
           } else if (prop == "gltf-model"){
-            objects[i]["asset_id"] = this.state.linkToIdMap[curChanges[prop]];
+            const newAssetId = this.state.linkToIdMap[curChanges[prop]];
+            if (objects[i]["asset_id"] != newAssetId){
+              hasChanged = true;
+              objects[i]["asset_id"] = newAssetId;
+            }
           }
         }
-        const putUrl = getUrl + "/object/" + objects[i].id;
-        const curId = objects[i].id;
-        delete objects[i].id;
-        delete objects[i].asset_details;
-        updateObject(putUrl, objects[i]);
-        objects[i].id = curId;
-        j++;
+        if (hasChanged){
+          changedObjectsString = changedObjectsString + " (" + objects[i].name  + ", id: " + objects[i].id + "),";
+          const putUrl = getUrl + "/object/" + objects[i].id;
+          const curId = objects[i].id;
+          delete objects[i].id;
+          delete objects[i].asset_details;
+          updateObject(putUrl, objects[i]);
+          objects[i].id = curId;
+          this.setState({ objects });
+          j++;
+        }
       }
       i++;
     }
-    if (objectChanges.length > 0){
+    if (changedObjectsString.length > 0){
       alert("Changes to the following objects were made: [" + changedObjectsString + " ] were saved");
     }
   };
