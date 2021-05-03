@@ -111,7 +111,7 @@ export default class Toolbar extends React.Component {
       let assets = response.data.assets;
       let linkToIdMap = new Map();
       assets.forEach(function( item, index) {
-        linkToIdMap["http://localhost:8888/static/"+item.s3_key] = item.id;
+        linkToIdMap[baseUrl+"static/"+item.s3_key] = item.id;
       });
       self.setState({ linkToIdMap });
     });
@@ -147,6 +147,7 @@ export default class Toolbar extends React.Component {
     const getUrl = baseUrl + baseEndpoint + "scene/" + apiEndpointScene;
     let objects = this.state.objects;
     let objectChanges = [];
+    let changedObjectsString = "";
     for(var id in AFRAME.INSPECTOR.history.updates)
       objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
     objectChanges.sort();
@@ -154,6 +155,7 @@ export default class Toolbar extends React.Component {
     let j = 0;
     while(i < objects.length && j < objectChanges.length){
       if (objects[i].id == objectChanges[j][0]){
+        changedObjectsString = changedObjectsString + " (" + objects[i].name  + ", id: " + objects[i].id + "),";
         let curChanges = objectChanges[j][1];
         for (const prop in curChanges){
           if (prop == "position" || prop == "scale" || prop == "rotation"){
@@ -163,12 +165,17 @@ export default class Toolbar extends React.Component {
           }
         }
         const putUrl = getUrl + "/object/" + objects[i].id;
+        const curId = objects[i].id;
         delete objects[i].id;
         delete objects[i].asset_details;
         updateObject(putUrl, objects[i]);
+        objects[i].id = curId;
         j++;
       }
       i++;
+    }
+    if (objectChanges.length > 0){
+      alert("Changes to the following objects were made: [" + changedObjectsString + " ] were saved");
     }
   };
 
