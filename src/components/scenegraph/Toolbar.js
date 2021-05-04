@@ -181,8 +181,8 @@ export default class Toolbar extends React.Component {
           updateObject(putUrl, objects[i]);
           objects[i].id = curId;
           this.setState({ objects });
-          j++;
         }
+        j++;
       }
       i++;
     }
