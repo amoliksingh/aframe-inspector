@@ -72,12 +72,15 @@ async function addObject(postUrl, object, refToToolbar){
     .then(function (response) {
       let newObjectId = response.data.id;
       let objects = refToToolbar.state.objects;
-      let newObjToIdMap = refToToolbar.state.newObjToIdMap;
-      newObjToIdMap.set(objId, newObjectId);
       object["id"] = newObjectId;
       objects.push(object);
-      refToToolbar.setState({ objects, newObjectId, newObjToIdMap });
-      alert("Added new object with id: " + newObjectId);
+      refToToolbar.setState({ objects });
+      alert("Added new object with name: " + object.name + ", id: " + newObjectId);
+
+      delete AFRAME.INSPECTOR.history.updates[objId];
+      let entity = document.getElementById(objId);
+      entity.id = newObjectId+"-obj";
+      Events.emit('entityidchange', entity);
     });
 }
 
@@ -91,9 +94,7 @@ export default class Toolbar extends React.Component {
     this.state = {
       isPlaying: false,
       objects: [],
-      linkToIdMap: null,
-      newObjectId: -1,
-      newObjToIdMap: new Map()
+      linkToIdMap: null
     };
     this.getRequests(this);
   }
@@ -180,13 +181,44 @@ export default class Toolbar extends React.Component {
     let objects = this.state.objects;
     let objectChanges = [];
     let changedObjectsString = "";
-    let newIdToObjIdMap = new Map();
-    let newObjectId = this.state.newObjectId;
 
     for(var id in AFRAME.INSPECTOR.history.updates){
       if (id.endsWith("-obj")){
         objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
       } else {
+        const objName = id.split("@")[0];
+        if (!('gltf-model' in AFRAME.INSPECTOR.history.updates[id])){
+          alert("Error: Please provide gltf-model for object with name: " + id);
+        } else{
+          let basicObject = {
+            "position": [0.0, 0.0, 0.0],
+            "scale": [1.0, 1.0, 1.0],
+            "rotation": [0.0, 0.0, 0.0],
+            "name": objName,
+            "asset_id": 1,
+            "next_objects": [
+              {
+                "id": 2,
+                "action": {
+                  "type": "text",
+                  "text_id": 1
+                }
+              }
+            ],
+            "is_interactable": false
+          }
+          let curChanges = AFRAME.INSPECTOR.history.updates[id];
+          for (const prop in curChanges){
+            if (prop == "position" || prop == "scale" || prop == "rotation"){
+              basicObject[prop] = curChanges[prop].split(" ").map(Number);
+            } else if (prop == "gltf-model"){
+              basicObject["asset_id"] = this.state.linkToIdMap[curChanges[prop]];
+            }
+          }
+          const postUrl = getUrl + "/object";
+          basicObject.obj = id;
+          addObject(postUrl, basicObject, this);
+        }
         // here is where we want to create a new object
         // first strip the name's suffix (<>-!) - make sure to save the suffix
         // POST request to backend - this endpoint returns the entire object JSON
@@ -197,15 +229,6 @@ export default class Toolbar extends React.Component {
         // var entity = document.getElementById("name"<>-!suffix);
         // Update entity ID - commoncomponents.js method updateID
         // error handling to make sure it has a gltf-model
-        let realId = newObjectId+1;
-        if (this.state.newObjToIdMap.has(id)){
-          realId = this.state.newObjToIdMap.get(id);
-        } else{
-          newIdToObjIdMap[newObjectId] = id;
-          newObjectId++;
-          this.setState({ newObjectId });
-        }
-        objectChanges.push([realId, AFRAME.INSPECTOR.history.updates[id]]);
       }
     }
     objectChanges.sort();
@@ -246,39 +269,6 @@ export default class Toolbar extends React.Component {
       i++;
     }
     this.setState({ objects });
-
-    while(j < objectChanges.length){
-      const objId = newIdToObjIdMap[ objectChanges[j][0] ];
-      let basicObject = {
-        "position": [0.0, 0.0, 0.0],
-        "scale": [1.0, 1.0, 1.0],
-        "rotation": [0.0, 0.0, 0.0],
-        "name": objId,
-        "asset_id": 1,
-        "next_objects": [
-          {
-            "id": 2,
-            "action": {
-              "type": "text",
-              "text_id": 1
-            }
-          }
-        ],
-        "is_interactable": false
-      }
-      let curChanges = objectChanges[j][1];
-      for (const prop in curChanges){
-        if (prop == "position" || prop == "scale" || prop == "rotation"){
-          basicObject[prop] = curChanges[prop].split(" ").map(Number);
-        } else if (prop == "gltf-model"){
-          basicObject["asset_id"] = this.state.linkToIdMap[curChanges[prop]];
-        }
-      }
-      const postUrl = getUrl + "/object";
-      basicObject.obj = objId;
-      addObject(postUrl, basicObject, this);
-      j++;
-    }
     
     if (changedObjectsString.length > 0){
       alert("Changes to the following objects were made: [" + changedObjectsString + " ] were saved");

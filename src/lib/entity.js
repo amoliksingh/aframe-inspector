@@ -13,9 +13,6 @@ import { v4 as uuidv4 } from 'uuid';
  * @param {string|number} value - New value.
  */
 export function updateEntity(entity, propertyName, value) {
-  console.log(entity);
-  console.log(propertyName);
-  console.log(value);
   var splitName;
 
   if (propertyName.indexOf('.') !== -1) {
