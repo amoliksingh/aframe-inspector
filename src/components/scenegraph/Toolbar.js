@@ -187,6 +187,16 @@ export default class Toolbar extends React.Component {
       if (id.endsWith("-obj")){
         objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
       } else {
+        // here is where we want to create a new object
+        // first strip the name's suffix (<>-!) - make sure to save the suffix
+        // POST request to backend - this endpoint returns the entire object JSON
+        // backend will return an id for the newly created object
+        // We have this: AFRAME.INSPECTOR.history.updates["name"<>-!suffix] = changes
+        // We update this to be AFRAME.INSPECTOR.history.updates["returned_id"-obj] = changes
+        // Add this new object to objects: 1. add it manually, OR 2. make a get request to scene/objects
+        // var entity = document.getElementById("name"<>-!suffix);
+        // Update entity ID - commoncomponents.js method updateID
+        // error handling to make sure it has a gltf-model
         let realId = newObjectId+1;
         if (this.state.newObjToIdMap.has(id)){
           realId = this.state.newObjToIdMap.get(id);
