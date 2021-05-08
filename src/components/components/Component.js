@@ -6,6 +6,9 @@ import Collapsible from '../Collapsible';
 import Clipboard from 'clipboard';
 import { getComponentClipboardRepresentation } from '../../lib/entity';
 import Events from '../../lib/Events';
+import Select from 'react-select';
+import { updateEntity } from '../../lib/entity';
+import axios from 'axios';
 
 const isSingleProperty = AFRAME.schema.isSingleProperty;
 
@@ -24,8 +27,42 @@ export default class Component extends React.Component {
     super(props);
     this.state = {
       entity: this.props.entity,
-      name: this.props.name
+      name: this.props.name,
+      nameToLinkMap: null,
+      nameList: []
     };
+    this.setObjects(this);
+  }
+
+  setObjects(self){
+    const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
+    const baseEndpoint = process.env.REACT_APP_ADMIN_BASE_ENDPOINT;
+    const getUrl = baseUrl + baseEndpoint + "assets";
+
+    axios.get(getUrl, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+    .catch((error) => {
+      if (error.response){
+        alert("URL: " + getUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      } else if (error.request){
+        alert("No response from URL: " + getUrl);
+      } else{
+        alert(error.message);
+      }
+    })
+    .then(function (response) {
+      const assets = response.data.assets;
+      let nameToLinkMap = new Map();
+      let nameList = [];
+      assets.forEach(function( item, index) {
+        nameToLinkMap[item.name] = baseUrl+"static/"+item.s3_key;
+        nameList.push(item.name);
+      });
+      self.setState({ nameToLinkMap, nameList });
+    });
   }
 
   componentDidMount() {
@@ -89,6 +126,11 @@ export default class Component extends React.Component {
     }
   };
 
+  selectOption = objName => {
+    const value = this.state.nameToLinkMap[objName];
+    updateEntity.apply(this, [this.props.entity, this.props.name, value]);
+  }
+
   /**
    * Render propert(ies) of the component.
    */
@@ -96,17 +138,17 @@ export default class Component extends React.Component {
     const componentData = this.props.component;
 
     if (isSingleProperty(componentData.schema)) {
-      const componentName = this.props.name;
-      const schema = AFRAME.components[componentName.split('__')[0]].schema;
       return (
-        <PropertyRow
-          key={componentName}
-          name={componentName}
-          schema={schema}
-          data={componentData.data}
-          componentname={componentName}
-          isSingle={true}
-          entity={this.props.entity}
+        <Select
+          id="gltfModelSelect"
+          ref="select"
+          options={this.state.nameList}
+          simpleValue
+          clearable={true}
+          placeholder="Add component..."
+          noResultsText="No components found"
+          searchable={true}
+          onChange={this.selectOption}
         />
       );
     }

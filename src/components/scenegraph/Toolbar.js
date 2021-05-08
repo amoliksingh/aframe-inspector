@@ -52,6 +52,31 @@ async function updateObject(putUrl, object){
     });
 }
 
+async function addObject(postUrl, object, refToToolbar){
+  axios.post(postUrl, object, {
+      headers: {
+          "Content-Type": "application/json",
+      },
+    })
+    .catch((error) => {
+      if (error.response){
+        alert("URL: " + postUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      } else if (error.request){
+        alert("No response from URL: " + postUrl);
+      } else{
+        alert(error.message);
+      }
+    })
+    .then(function (response) {
+      let newObjectId = response.data.id;
+      let objects = refToToolbar.state.objects;
+      object["id"] = newObjectId;
+      objects.push(object);
+      refToToolbar.setState({ objects, newObjectId });
+      alert("Added new object with id: " + newObjectId);
+    });
+}
+
 /**
  * Tools and actions.
  */
@@ -62,7 +87,8 @@ export default class Toolbar extends React.Component {
     this.state = {
       isPlaying: false,
       objects: [],
-      linkToIdMap: null
+      linkToIdMap: null,
+      newObjectId: -1
     };
     this.getRequests(this);
   }
@@ -89,7 +115,8 @@ export default class Toolbar extends React.Component {
     })
     .then(function (response) {
       let objects = response.data.objects;
-      self.setState({ objects });
+      let newObjectId = objects[objects.length-1].id+1;
+      self.setState({ objects, newObjectId });
     });
 
     getUrl = baseUrl + baseEndpoint + "assets";
@@ -148,9 +175,17 @@ export default class Toolbar extends React.Component {
     let objects = this.state.objects;
     let objectChanges = [];
     let changedObjectsString = "";
-    for(var id in AFRAME.INSPECTOR.history.updates)
-      objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
+
+    console.log(AFRAME.INSPECTOR.history.updates);
+    for(var id in AFRAME.INSPECTOR.history.updates){
+      if (id.endsWith("-obj")){
+        objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
+      } else {
+        objectChanges.push([this.state.newObjectId, AFRAME.INSPECTOR.history.updates[id]])
+      }
+    }
     objectChanges.sort();
+
     let i = 0;
     let j = 0;
     while(i < objects.length && j < objectChanges.length){
@@ -180,12 +215,44 @@ export default class Toolbar extends React.Component {
           delete objects[i].asset_details;
           updateObject(putUrl, objects[i]);
           objects[i].id = curId;
-          this.setState({ objects });
         }
         j++;
       }
       i++;
     }
+    this.setState({ objects });
+
+    while(j < objectChanges.length){
+      let basicObject = {
+        "position": [0.0, 0.0, 0.0],
+        "scale": [1.0, 1.0, 1.0],
+        "rotation": [0.0, 0.0, 0.0],
+        "name": "newObject",
+        "asset_id": 1,
+        "next_objects": [
+          {
+            "id": 2,
+            "action": {
+              "type": "text",
+              "text_id": 1
+            }
+          }
+        ],
+        "is_interactable": false
+      }
+      let curChanges = objectChanges[j][1];
+      for (const prop in curChanges){
+        if (prop == "position" || prop == "scale" || prop == "rotation"){
+          basicObject[prop] = curChanges[prop].split(" ").map(Number);
+        } else if (prop == "gltf-model"){
+          basicObject["asset_id"] = this.state.linkToIdMap[curChanges[prop]];
+        }
+      }
+      const postUrl = getUrl + "/object";
+      addObject(postUrl, basicObject, this);
+      j++;
+    }
+    
     if (changedObjectsString.length > 0){
       alert("Changes to the following objects were made: [" + changedObjectsString + " ] were saved");
     }
