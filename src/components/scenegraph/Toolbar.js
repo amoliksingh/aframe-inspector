@@ -176,7 +176,6 @@ export default class Toolbar extends React.Component {
     let objectChanges = [];
     let changedObjectsString = "";
 
-    console.log(AFRAME.INSPECTOR.history.updates);
     for(var id in AFRAME.INSPECTOR.history.updates){
       if (id.endsWith("-obj")){
         objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
