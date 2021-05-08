@@ -53,6 +53,8 @@ async function updateObject(putUrl, object){
 }
 
 async function addObject(postUrl, object, refToToolbar){
+  const objId = object.obj;
+  delete object.obj;
   axios.post(postUrl, object, {
       headers: {
           "Content-Type": "application/json",
@@ -70,9 +72,11 @@ async function addObject(postUrl, object, refToToolbar){
     .then(function (response) {
       let newObjectId = response.data.id;
       let objects = refToToolbar.state.objects;
+      let newObjToIdMap = refToToolbar.state.newObjToIdMap;
+      newObjToIdMap.set(objId, newObjectId);
       object["id"] = newObjectId;
       objects.push(object);
-      refToToolbar.setState({ objects, newObjectId });
+      refToToolbar.setState({ objects, newObjectId, newObjToIdMap });
       alert("Added new object with id: " + newObjectId);
     });
 }
@@ -88,7 +92,8 @@ export default class Toolbar extends React.Component {
       isPlaying: false,
       objects: [],
       linkToIdMap: null,
-      newObjectId: -1
+      newObjectId: -1,
+      newObjToIdMap: new Map()
     };
     this.getRequests(this);
   }
@@ -175,15 +180,26 @@ export default class Toolbar extends React.Component {
     let objects = this.state.objects;
     let objectChanges = [];
     let changedObjectsString = "";
+    let newIdToObjIdMap = new Map();
+    let newObjectId = this.state.newObjectId;
 
     for(var id in AFRAME.INSPECTOR.history.updates){
       if (id.endsWith("-obj")){
         objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
       } else {
-        objectChanges.push([this.state.newObjectId, AFRAME.INSPECTOR.history.updates[id]])
+        let realId = newObjectId+1;
+        if (this.state.newObjToIdMap.has(id)){
+          realId = this.state.newObjToIdMap.get(id);
+        } else{
+          newIdToObjIdMap[newObjectId] = id;
+          newObjectId++;
+          this.setState({ newObjectId });
+        }
+        objectChanges.push([realId, AFRAME.INSPECTOR.history.updates[id]]);
       }
     }
     objectChanges.sort();
+    objects.sort((a,b) => a.id - b.id);
 
     let i = 0;
     let j = 0;
@@ -222,11 +238,12 @@ export default class Toolbar extends React.Component {
     this.setState({ objects });
 
     while(j < objectChanges.length){
+      const objId = newIdToObjIdMap[ objectChanges[j][0] ];
       let basicObject = {
         "position": [0.0, 0.0, 0.0],
         "scale": [1.0, 1.0, 1.0],
         "rotation": [0.0, 0.0, 0.0],
-        "name": "newObject",
+        "name": objId,
         "asset_id": 1,
         "next_objects": [
           {
@@ -248,6 +265,7 @@ export default class Toolbar extends React.Component {
         }
       }
       const postUrl = getUrl + "/object";
+      basicObject.obj = objId;
       addObject(postUrl, basicObject, this);
       j++;
     }
