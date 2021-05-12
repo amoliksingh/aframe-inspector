@@ -60,7 +60,7 @@ export default class Component extends React.Component {
       let nameList = [];
       assets.forEach(function( item, index) {
         nameToLinkMap[item.name] = assetsUrl+item.s3_key;
-        nameList.push(item.name);
+        nameList.push({ value: assetsUrl+item.s3_key, label: item.name })
       });
       self.setState({ nameToLinkMap, nameList });
     });
@@ -127,8 +127,8 @@ export default class Component extends React.Component {
     }
   };
 
-  selectOption = objName => {
-    const value = this.state.nameToLinkMap[objName];
+  selectOption = obj => {
+    const value = this.state.nameToLinkMap[obj.label];
     updateEntity.apply(this, [this.props.entity, this.props.name, value]);
   }
 
@@ -137,6 +137,13 @@ export default class Component extends React.Component {
    */
   renderPropertyRows = () => {
     const componentData = this.props.component;
+    const customStyles = {
+      option: (provided, state) => ({
+        provided,
+        color: state.isSelected ? 'blue' : 'black',
+        padding: 20,
+      })
+    };
 
     if (isSingleProperty(componentData.schema)) {
       const componentName = this.props.name;
@@ -157,11 +164,10 @@ export default class Component extends React.Component {
       } else{
         return (
           <Select
-            id="gltfModelSelect"
+            styles={customStyles}
+            value={this.state.nameList.filter(option => option.value == componentData.data)}
             ref="select"
             options={this.state.nameList}
-            simpleValue
-            clearable={true}
             placeholder="Add component..."
             noResultsText="No components found"
             searchable={true}
