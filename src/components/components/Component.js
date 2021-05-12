@@ -28,7 +28,6 @@ export default class Component extends React.Component {
     this.state = {
       entity: this.props.entity,
       name: this.props.name,
-      nameToLinkMap: null,
       nameList: []
     };
     this.setObjects(this);
@@ -56,13 +55,11 @@ export default class Component extends React.Component {
     })
     .then(function (response) {
       const assets = response.data.assets;
-      let nameToLinkMap = new Map();
       let nameList = [];
       assets.forEach(function( item, index) {
-        nameToLinkMap[item.name] = assetsUrl+item.s3_key;
         nameList.push({ value: assetsUrl+item.s3_key, label: item.name })
       });
-      self.setState({ nameToLinkMap, nameList });
+      self.setState({ nameList });
     });
   }
 
@@ -128,8 +125,7 @@ export default class Component extends React.Component {
   };
 
   selectOption = obj => {
-    const value = this.state.nameToLinkMap[obj.label];
-    updateEntity.apply(this, [this.props.entity, this.props.name, value]);
+    updateEntity.apply(this, [this.props.entity, this.props.name, obj.value]);
   }
 
   /**
