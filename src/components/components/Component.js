@@ -38,6 +38,7 @@ export default class Component extends React.Component {
     const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
     const baseEndpoint = process.env.REACT_APP_ADMIN_BASE_ENDPOINT;
     const getUrl = baseUrl + baseEndpoint + "assets";
+    const assetsUrl = process.env.REACT_APP_ADMIN_ASSET_PREFIX_URL;
 
     axios.get(getUrl, {
         headers: {
@@ -58,7 +59,7 @@ export default class Component extends React.Component {
       let nameToLinkMap = new Map();
       let nameList = [];
       assets.forEach(function( item, index) {
-        nameToLinkMap[item.name] = baseUrl+"static/"+item.s3_key;
+        nameToLinkMap[item.name] = assetsUrl+item.s3_key;
         nameList.push(item.name);
       });
       self.setState({ nameToLinkMap, nameList });
@@ -138,19 +139,36 @@ export default class Component extends React.Component {
     const componentData = this.props.component;
 
     if (isSingleProperty(componentData.schema)) {
-      return (
-        <Select
-          id="gltfModelSelect"
-          ref="select"
-          options={this.state.nameList}
-          simpleValue
-          clearable={true}
-          placeholder="Add component..."
-          noResultsText="No components found"
-          searchable={true}
-          onChange={this.selectOption}
-        />
-      );
+      const componentName = this.props.name;
+      const schema = AFRAME.components[componentName.split('__')[0]].schema;
+
+      if (componentName != 'gltf-model'){
+        return (
+          <PropertyRow
+            key={componentName}
+            name={componentName}
+            schema={schema}
+            data={componentData.data}
+            componentname={componentName}
+            isSingle={true}
+            entity={this.props.entity}
+          />
+        );
+      } else{
+        return (
+          <Select
+            id="gltfModelSelect"
+            ref="select"
+            options={this.state.nameList}
+            simpleValue
+            clearable={true}
+            placeholder="Add component..."
+            noResultsText="No components found"
+            searchable={true}
+            onChange={this.selectOption}
+          />
+        );
+      }
     }
 
     return Object.keys(componentData.schema)

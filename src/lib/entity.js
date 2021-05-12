@@ -600,6 +600,7 @@ export function createEntity(definition, cb) {
       entity.setAttribute(attr, definition.components[attr]);
     }
     entity.setAttribute("id", objName);
+    entity.setAttribute("gltf-model", "");
     // Ensure the components are loaded before update the UI
     entity.addEventListener('loaded', () => {
       Events.emit('entitycreated', entity);

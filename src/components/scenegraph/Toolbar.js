@@ -103,6 +103,7 @@ export default class Toolbar extends React.Component {
     const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
     const apiEndpointScene = AFRAME.scenes[0].getAttribute("id").replace("-scene", "");
     const baseEndpoint = process.env.REACT_APP_ADMIN_BASE_ENDPOINT;
+    const assetsUrl = process.env.REACT_APP_ADMIN_ASSET_PREFIX_URL;
 
     let getUrl = baseUrl + baseEndpoint + "scene/" + apiEndpointScene;
     axios.get(getUrl, {
@@ -121,8 +122,7 @@ export default class Toolbar extends React.Component {
     })
     .then(function (response) {
       let objects = response.data.objects;
-      let newObjectId = objects[objects.length-1].id+1;
-      self.setState({ objects, newObjectId });
+      self.setState({ objects });
     });
 
     getUrl = baseUrl + baseEndpoint + "assets";
@@ -144,7 +144,7 @@ export default class Toolbar extends React.Component {
       let assets = response.data.assets;
       let linkToIdMap = new Map();
       assets.forEach(function( item, index) {
-        linkToIdMap[baseUrl+"static/"+item.s3_key] = item.id;
+        linkToIdMap[assetsUrl+item.s3_key] = item.id;
       });
       self.setState({ linkToIdMap });
     });
@@ -187,8 +187,9 @@ export default class Toolbar extends React.Component {
         objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
       } else {
         const objName = id.split("@")[0];
-        if (!('gltf-model' in AFRAME.INSPECTOR.history.updates[id])){
-          alert("Error: Please provide gltf-model for object with name: " + id);
+        if (!('gltf-model' in AFRAME.INSPECTOR.history.updates[id]) || AFRAME.INSPECTOR.history.updates[id]['gltf-model'] == ""){
+          alert("Error: Save failed, Please provide gltf-model for object with name: " + id);
+          return;
         } else{
           let basicObject = {
             "position": [0.0, 0.0, 0.0],
