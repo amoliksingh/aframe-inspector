@@ -52,6 +52,38 @@ async function updateObject(putUrl, object){
     });
 }
 
+async function addObject(postUrl, object, refToToolbar){
+  const objId = object.obj;
+  delete object.obj;
+  axios.post(postUrl, object, {
+      headers: {
+          "Content-Type": "application/json",
+      },
+    })
+    .catch((error) => {
+      if (error.response){
+        alert("URL: " + postUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      } else if (error.request){
+        alert("No response from URL: " + postUrl);
+      } else{
+        alert(error.message);
+      }
+    })
+    .then(function (response) {
+      let newObjectId = response.data.id;
+      let objects = refToToolbar.state.objects;
+      object["id"] = newObjectId;
+      objects.push(object);
+      refToToolbar.setState({ objects });
+      alert("Added new object with name: " + object.name + ", id: " + newObjectId);
+
+      delete AFRAME.INSPECTOR.history.updates[objId];
+      let entity = document.getElementById(objId);
+      entity.id = newObjectId+"-obj";
+      Events.emit('entityidchange', entity);
+    });
+}
+
 /**
  * Tools and actions.
  */
@@ -71,6 +103,7 @@ export default class Toolbar extends React.Component {
     const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
     const apiEndpointScene = AFRAME.scenes[0].getAttribute("id").replace("-scene", "");
     const baseEndpoint = process.env.REACT_APP_ADMIN_BASE_ENDPOINT;
+    const assetsUrl = process.env.REACT_APP_ADMIN_ASSET_PREFIX_URL;
 
     let getUrl = baseUrl + baseEndpoint + "scene/" + apiEndpointScene;
     axios.get(getUrl, {
@@ -111,7 +144,7 @@ export default class Toolbar extends React.Component {
       let assets = response.data.assets;
       let linkToIdMap = new Map();
       assets.forEach(function( item, index) {
-        linkToIdMap[baseUrl+"static/"+item.s3_key] = item.id;
+        linkToIdMap[assetsUrl+item.s3_key] = item.id;
       });
       self.setState({ linkToIdMap });
     });
@@ -148,9 +181,60 @@ export default class Toolbar extends React.Component {
     let objects = this.state.objects;
     let objectChanges = [];
     let changedObjectsString = "";
-    for(var id in AFRAME.INSPECTOR.history.updates)
-      objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
+
+    for(var id in AFRAME.INSPECTOR.history.updates){
+      if (id.endsWith("-obj")){
+        objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
+      } else {
+        const objName = id.split("@")[0];
+        if (!('gltf-model' in AFRAME.INSPECTOR.history.updates[id]) || AFRAME.INSPECTOR.history.updates[id]['gltf-model'] == ""){
+          alert("Error: Save failed, Please provide gltf-model for object with name: " + id);
+          return;
+        } else{
+          let basicObject = {
+            "position": [0.0, 0.0, 0.0],
+            "scale": [1.0, 1.0, 1.0],
+            "rotation": [0.0, 0.0, 0.0],
+            "name": objName,
+            "asset_id": 1,
+            "next_objects": [
+              {
+                "id": 2,
+                "action": {
+                  "type": "text",
+                  "text_id": 1
+                }
+              }
+            ],
+            "is_interactable": false
+          }
+          let curChanges = AFRAME.INSPECTOR.history.updates[id];
+          for (const prop in curChanges){
+            if (prop == "position" || prop == "scale" || prop == "rotation"){
+              basicObject[prop] = curChanges[prop].split(" ").map(Number);
+            } else if (prop == "gltf-model"){
+              basicObject["asset_id"] = this.state.linkToIdMap[curChanges[prop]];
+            }
+          }
+          const postUrl = getUrl + "/object";
+          basicObject.obj = id;
+          addObject(postUrl, basicObject, this);
+        }
+        // here is where we want to create a new object
+        // first strip the name's suffix (<>-!) - make sure to save the suffix
+        // POST request to backend - this endpoint returns the entire object JSON
+        // backend will return an id for the newly created object
+        // We have this: AFRAME.INSPECTOR.history.updates["name"<>-!suffix] = changes
+        // We update this to be AFRAME.INSPECTOR.history.updates["returned_id"-obj] = changes
+        // Add this new object to objects: 1. add it manually, OR 2. make a get request to scene/objects
+        // var entity = document.getElementById("name"<>-!suffix);
+        // Update entity ID - commoncomponents.js method updateID
+        // error handling to make sure it has a gltf-model
+      }
+    }
     objectChanges.sort();
+    objects.sort((a,b) => a.id - b.id);
+
     let i = 0;
     let j = 0;
     while(i < objects.length && j < objectChanges.length){
@@ -180,12 +264,13 @@ export default class Toolbar extends React.Component {
           delete objects[i].asset_details;
           updateObject(putUrl, objects[i]);
           objects[i].id = curId;
-          this.setState({ objects });
         }
         j++;
       }
       i++;
     }
+    this.setState({ objects });
+    
     if (changedObjectsString.length > 0){
       alert("Changes to the following objects were made: [" + changedObjectsString + " ] were saved");
     }

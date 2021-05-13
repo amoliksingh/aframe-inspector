@@ -2,6 +2,7 @@ import React from 'react';
 var Events = require('../lib/Events.js');
 
 import { equal } from '../lib/utils.js';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Update a component.
@@ -585,20 +586,31 @@ export function printEntity(entity, onDoubleClick) {
  * @return {Element} Entity created
  */
 export function createEntity(definition, cb) {
-  const entity = document.createElement(definition.element);
-
-  // load default attributes
-  for (let attr in definition.components) {
-    entity.setAttribute(attr, definition.components[attr]);
+  let objName = "";
+  while(objName == ""){
+    objName = prompt("Enter the name of the object");
   }
 
-  // Ensure the components are loaded before update the UI
-  entity.addEventListener('loaded', () => {
-    Events.emit('entitycreated', entity);
-    cb(entity);
-  });
-
-  AFRAME.scenes[0].appendChild(entity);
-
-  return entity;
+  if (objName != null){
+    objName += "@" + uuidv4();
+    const entity = document.createElement(definition.element);
+  
+    // load default attributes
+    for (let attr in definition.components) {
+      entity.setAttribute(attr, definition.components[attr]);
+    }
+    entity.setAttribute("id", objName);
+    entity.setAttribute("gltf-model", "");
+    // Ensure the components are loaded before update the UI
+    entity.addEventListener('loaded', () => {
+      Events.emit('entitycreated', entity);
+      cb(entity);
+    });
+  
+    AFRAME.scenes[0].appendChild(entity);
+  
+    return entity;
+  } else{
+    return null;
+  }
 }

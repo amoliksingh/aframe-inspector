@@ -6,6 +6,9 @@ import Collapsible from '../Collapsible';
 import Clipboard from 'clipboard';
 import { getComponentClipboardRepresentation } from '../../lib/entity';
 import Events from '../../lib/Events';
+import Select from 'react-select';
+import { updateEntity } from '../../lib/entity';
+import axios from 'axios';
 
 const isSingleProperty = AFRAME.schema.isSingleProperty;
 
@@ -24,8 +27,40 @@ export default class Component extends React.Component {
     super(props);
     this.state = {
       entity: this.props.entity,
-      name: this.props.name
+      name: this.props.name,
+      nameList: []
     };
+    this.setObjects(this);
+  }
+
+  setObjects(self){
+    const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
+    const baseEndpoint = process.env.REACT_APP_ADMIN_BASE_ENDPOINT;
+    const getUrl = baseUrl + baseEndpoint + "assets";
+    const assetsUrl = process.env.REACT_APP_ADMIN_ASSET_PREFIX_URL;
+
+    axios.get(getUrl, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+    .catch((error) => {
+      if (error.response){
+        alert("URL: " + getUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      } else if (error.request){
+        alert("No response from URL: " + getUrl);
+      } else{
+        alert(error.message);
+      }
+    })
+    .then(function (response) {
+      const assets = response.data.assets;
+      let nameList = [];
+      assets.forEach(function( item, index) {
+        nameList.push({ value: assetsUrl+item.s3_key, label: item.name })
+      });
+      self.setState({ nameList });
+    });
   }
 
   componentDidMount() {
@@ -89,26 +124,53 @@ export default class Component extends React.Component {
     }
   };
 
+  selectOption = obj => {
+    updateEntity.apply(this, [this.props.entity, this.props.name, obj.value]);
+  }
+
   /**
    * Render propert(ies) of the component.
    */
   renderPropertyRows = () => {
     const componentData = this.props.component;
+    const customStyles = {
+      option: (provided, state) => ({
+        provided,
+        color: state.isSelected ? 'blue' : 'black',
+        padding: 20,
+      })
+    };
 
     if (isSingleProperty(componentData.schema)) {
       const componentName = this.props.name;
       const schema = AFRAME.components[componentName.split('__')[0]].schema;
-      return (
-        <PropertyRow
-          key={componentName}
-          name={componentName}
-          schema={schema}
-          data={componentData.data}
-          componentname={componentName}
-          isSingle={true}
-          entity={this.props.entity}
-        />
-      );
+
+      if (componentName != 'gltf-model'){
+        return (
+          <PropertyRow
+            key={componentName}
+            name={componentName}
+            schema={schema}
+            data={componentData.data}
+            componentname={componentName}
+            isSingle={true}
+            entity={this.props.entity}
+          />
+        );
+      } else{
+        return (
+          <Select
+            styles={customStyles}
+            value={this.state.nameList.filter(option => option.value == componentData.data)}
+            ref="select"
+            options={this.state.nameList}
+            placeholder="Add component..."
+            noResultsText="No components found"
+            searchable={true}
+            onChange={this.selectOption}
+          />
+        );
+      }
     }
 
     return Object.keys(componentData.schema)
