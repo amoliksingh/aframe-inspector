@@ -3,24 +3,6 @@ var Events = require('../lib/Events.js');
 
 import { equal } from '../lib/utils.js';
 import { v4 as uuidv4 } from 'uuid';
-import axios from 'axios';
-
-async function deleteObject(deleteUrl){
-  axios.delete(deleteUrl, {
-      headers: {
-          "Content-Type": "application/json",
-      },
-    })
-    .catch((error) => {
-      if (error.response){
-        alert("URL: " + deleteUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
-      } else if (error.request){
-        alert("No response from URL: " + deleteUrl);
-      } else{
-        alert(error.message);
-      }
-    });
-}
 
 /**
  * Update a component.
@@ -85,12 +67,17 @@ export function removeEntity(entity, force) {
       entity.parentNode.removeChild(entity);
       AFRAME.INSPECTOR.selectEntity(closest);
 
-      const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
-      const apiEndpointScene = AFRAME.scenes[0].getAttribute("id").replace("-scene", "");
-      const baseEndpoint = process.env.REACT_APP_ADMIN_BASE_ENDPOINT;
-      const deleteUrl = baseUrl + baseEndpoint + "scene/" + apiEndpointScene + "/object/" + entity.id.replace("-obj", "");
-      deleteObject(deleteUrl);
-      delete AFRAME.INSPECTOR.history.updates[entity.id];
+      // if entity exists in backend (ends with -obj), then delete upon hitting save (happens in Toolbar.js)
+      // else entity is new and does not have an assigned id and should have its changes deleted right away
+      if (entity.id.endsWith("-obj")){
+        if(!AFRAME.INSPECTOR.history.updates[entity.id]){
+          AFRAME.INSPECTOR.history.updates[entity.id] = { 'delete': true };
+        } else{
+          AFRAME.INSPECTOR.history.updates[entity.id]['delete'] = true;
+        }
+      } else {
+        delete AFRAME.INSPECTOR.history.updates[entity.id];
+      }
     }
   }
 }

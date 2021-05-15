@@ -84,6 +84,23 @@ async function addObject(postUrl, object, refToToolbar){
     });
 }
 
+async function deleteObject(deleteUrl){
+  axios.delete(deleteUrl, {
+      headers: {
+          "Content-Type": "application/json",
+      },
+    })
+    .catch((error) => {
+      if (error.response){
+        alert("URL: " + deleteUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      } else if (error.request){
+        alert("No response from URL: " + deleteUrl);
+      } else{
+        alert(error.message);
+      }
+    });
+}
+
 /**
  * Tools and actions.
  */
@@ -181,13 +198,25 @@ export default class Toolbar extends React.Component {
     let objects = this.state.objects;
     let objectChanges = [];
     let changedObjectsString = "";
+    let deletedObjectsString = "";
 
     for(var id in AFRAME.INSPECTOR.history.updates){
       if (id.endsWith("-obj")){
-        objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
-      } else {
+        if ("delete" in AFRAME.INSPECTOR.history.updates[id]){
+          if (deletedObjectsString == ""){
+            deletedObjectsString = id.replace("-obj", "");
+          } else{
+            deletedObjectsString = deletedObjectsString + ", " + id.replace("-obj", "");
+          }
+          const deleteUrl = baseUrl + baseEndpoint + "scene/" + apiEndpointScene + "/object/" + id.replace("-obj", "");
+          deleteObject(deleteUrl);
+          delete AFRAME.INSPECTOR.history.updates[id];
+        } else{
+          objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
+        }
+      } else if (id.includes("@")) {
         const objName = id.split("@")[0];
-        if (!('gltf-model' in AFRAME.INSPECTOR.history.updates[id]) || AFRAME.INSPECTOR.history.updates[id]['gltf-model'] == ""){
+        if (!("gltf-model" in AFRAME.INSPECTOR.history.updates[id]) || AFRAME.INSPECTOR.history.updates[id]['gltf-model'] == ""){
           alert("Error: Save failed, Please provide gltf-model for object with name: " + id);
           return;
         } else{
@@ -232,6 +261,11 @@ export default class Toolbar extends React.Component {
         // error handling to make sure it has a gltf-model
       }
     }
+
+    if (deletedObjectsString.length > 0){
+      alert("The objects with the following ids were deleted: [ " + deletedObjectsString + " ]");
+    }
+
     objectChanges.sort();
     objects.sort((a,b) => a.id - b.id);
 
