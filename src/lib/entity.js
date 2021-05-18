@@ -66,6 +66,18 @@ export function removeEntity(entity, force) {
       AFRAME.INSPECTOR.removeObject(entity.object3D);
       entity.parentNode.removeChild(entity);
       AFRAME.INSPECTOR.selectEntity(closest);
+
+      // if entity exists in backend (ends with -obj), then delete upon hitting save (happens in Toolbar.js)
+      // else entity is new and does not have an assigned id and should have its changes deleted right away
+      if (entity.id.endsWith("-obj")){
+        if(!AFRAME.INSPECTOR.history.updates[entity.id]){
+          AFRAME.INSPECTOR.history.updates[entity.id] = { 'delete': true };
+        } else{
+          AFRAME.INSPECTOR.history.updates[entity.id]['delete'] = true;
+        }
+      } else {
+        delete AFRAME.INSPECTOR.history.updates[entity.id];
+      }
     }
   }
 }
