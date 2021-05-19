@@ -37,68 +37,88 @@ function slugify(text) {
 
 async function updateObject(putUrl, object){
   axios.put(putUrl, object, {
-      headers: {
-          "Content-Type": "application/json",
-      },
-    })
-    .catch((error) => {
-      if (error.response){
-        alert("URL: " + putUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
-      } else if (error.request){
-        alert("No response from URL: " + putUrl);
-      } else{
-        alert(error.message);
-      }
-    });
+    headers: {
+        "Content-Type": "application/json",
+    },
+  })
+  .catch((error) => {
+    if (error.response){
+      alert("URL: " + putUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+    } else if (error.request){
+      alert("No response from URL: " + putUrl);
+    } else{
+      alert(error.message);
+    }
+  });
 }
 
 async function addObject(postUrl, object, refToToolbar){
   const objId = object.obj;
   delete object.obj;
   axios.post(postUrl, object, {
-      headers: {
-          "Content-Type": "application/json",
-      },
-    })
-    .catch((error) => {
-      if (error.response){
-        alert("URL: " + postUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
-      } else if (error.request){
-        alert("No response from URL: " + postUrl);
-      } else{
-        alert(error.message);
-      }
-    })
-    .then(function (response) {
-      let newObjectId = response.data.id;
-      let objects = refToToolbar.state.objects;
-      object["id"] = newObjectId;
-      objects.push(object);
-      refToToolbar.setState({ objects });
-      alert("Added new object with name: " + object.name + ", id: " + newObjectId);
+    headers: {
+        "Content-Type": "application/json",
+    },
+  })
+  .then(function (response) {
+    let newObjectId = response.data.id;
+    let objects = refToToolbar.state.objects;
+    object["id"] = newObjectId;
+    objects.push(object);
+    refToToolbar.setState({ objects });
+    alert("Added new object with name: " + object.name + ", id: " + newObjectId);
 
-      delete AFRAME.INSPECTOR.history.updates[objId];
-      let entity = document.getElementById(objId);
-      entity.id = newObjectId+"-obj";
-      Events.emit('entityidchange', entity);
-    });
+    delete AFRAME.INSPECTOR.history.updates[objId];
+    let entity = document.getElementById(objId);
+    entity.id = newObjectId+"-obj";
+    Events.emit('entityidchange', entity);
+  })
+  .catch((error) => {
+    if (error.response){
+      alert("URL: " + postUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+    } else if (error.request){
+      alert("No response from URL: " + postUrl);
+    } else{
+      alert(error.message);
+    }
+  });
 }
 
 async function deleteObject(deleteUrl){
   axios.delete(deleteUrl, {
-      headers: {
-          "Content-Type": "application/json",
-      },
-    })
-    .catch((error) => {
-      if (error.response){
-        alert("URL: " + deleteUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
-      } else if (error.request){
-        alert("No response from URL: " + deleteUrl);
-      } else{
-        alert(error.message);
-      }
-    });
+    headers: {
+        "Content-Type": "application/json",
+    },
+  })
+  .catch((error) => {
+    if (error.response){
+      alert("URL: " + deleteUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+    } else if (error.request){
+      alert("No response from URL: " + deleteUrl);
+    } else{
+      alert(error.message);
+    }
+  });
+}
+
+async function editBackground(sceneUrl, sceneBody){
+  axios.put(sceneUrl, sceneBody, {
+    headers: {
+        "Content-Type": "application/json",
+    },
+  })
+  .then(function (response) {
+    alert("Changes to the background were saved");
+  })
+  .catch((error) => {
+    if (error.response){
+      alert("URL: " + sceneUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+    } else if (error.request){
+      alert("No response from URL: " + sceneUrl);
+    } else{
+      alert(error.message);
+    }
+  });
 }
 
 /**
@@ -111,7 +131,8 @@ export default class Toolbar extends React.Component {
     this.state = {
       isPlaying: false,
       objects: [],
-      linkToIdMap: null
+      linkToIdMap: null,
+      sceneBody: null
     };
     this.getRequests(this);
   }
@@ -139,7 +160,12 @@ export default class Toolbar extends React.Component {
     })
     .then(function (response) {
       let objects = response.data.objects;
-      self.setState({ objects });
+      let sceneBody = response.data;
+      delete sceneBody.objects;
+      delete sceneBody.background_details;
+      delete sceneBody.id;
+      delete sceneBody.hints;
+      self.setState({ objects, sceneBody });
     });
 
     getUrl = baseUrl + baseEndpoint + "assets";
@@ -201,7 +227,30 @@ export default class Toolbar extends React.Component {
     let deletedObjectsString = "";
 
     for(var id in AFRAME.INSPECTOR.history.updates){
-      if (id.endsWith("-obj")){
+      if (id.endsWith("-background")){
+        let sceneBody = this.state.sceneBody;
+        let hasChanged = false;
+        const changes = AFRAME.INSPECTOR.history.updates[id];
+        for (const prop in changes){
+          if (prop == "position" || prop == "scale" || prop == "rotation"){
+            const newPropArr = changes[prop].split(" ").map(Number);
+            if (JSON.stringify(sceneBody[prop]) != JSON.stringify(newPropArr)){
+              hasChanged = true;
+              sceneBody[prop] = newPropArr;
+            }
+          } else if (prop == "gltf-model"){
+            const newAssetId = this.state.linkToIdMap[changes[prop]];
+            if (sceneBody["background_id"] != newAssetId){
+              hasChanged = true;
+              sceneBody["background_id"] = newAssetId;
+            }
+          }
+        }
+        if (hasChanged){
+          this.setState({ sceneBody });
+          editBackground(getUrl, sceneBody);
+        }
+      } else if (id.endsWith("-obj")){
         if ("delete" in AFRAME.INSPECTOR.history.updates[id]){
           if (deletedObjectsString == ""){
             deletedObjectsString = id.replace("-obj", "");
