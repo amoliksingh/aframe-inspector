@@ -67,8 +67,6 @@ async function addObject(postUrl, object, refToToolbar){
     objects.push(object);
     refToToolbar.setState({ objects });
     alert("Added new object with name: " + object.name + ", id: " + newObjectId);
-
-    delete AFRAME.INSPECTOR.history.updates[objId];
     let entity = document.getElementById(objId);
     entity.id = newObjectId+"-obj";
     Events.emit('entityidchange', entity);
@@ -165,6 +163,7 @@ export default class Toolbar extends React.Component {
       delete sceneBody.background_details;
       delete sceneBody.id;
       delete sceneBody.hints;
+      delete sceneBody.object_ids;
       self.setState({ objects, sceneBody });
     });
 
@@ -259,7 +258,6 @@ export default class Toolbar extends React.Component {
           }
           const deleteUrl = baseUrl + baseEndpoint + "scene/" + apiEndpointScene + "/object/" + id.replace("-obj", "");
           deleteObject(deleteUrl);
-          delete AFRAME.INSPECTOR.history.updates[id];
         } else{
           objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
         }
@@ -309,6 +307,9 @@ export default class Toolbar extends React.Component {
         // Update entity ID - commoncomponents.js method updateID
         // error handling to make sure it has a gltf-model
       }
+    }
+    for (var id in AFRAME.INSPECTOR.history.updates){
+      delete AFRAME.INSPECTOR.history.updates[id];
     }
 
     if (deletedObjectsString.length > 0){
