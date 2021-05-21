@@ -225,6 +225,17 @@ export default class Toolbar extends React.Component {
     let changedObjectsString = "";
     let deletedObjectsString = "";
 
+    // validation of changes
+    for(var id in AFRAME.INSPECTOR.history.updates){
+      if (id.includes("@")) {
+        if (!("gltf-model" in AFRAME.INSPECTOR.history.updates[id]) || AFRAME.INSPECTOR.history.updates[id]['gltf-model'] == ""){
+          alert("Error: Save failed, Please provide gltf-model for object with name: " + id + "\nNo changes were made, please fix errors before saving");
+          return;
+        }
+      }
+    }
+
+    // perform changes / add changes to objectChanges object
     for(var id in AFRAME.INSPECTOR.history.updates){
       if (id.endsWith("-background")){
         let sceneBody = this.state.sceneBody;
@@ -263,39 +274,34 @@ export default class Toolbar extends React.Component {
         }
       } else if (id.includes("@")) {
         const objName = id.split("@")[0];
-        if (!("gltf-model" in AFRAME.INSPECTOR.history.updates[id]) || AFRAME.INSPECTOR.history.updates[id]['gltf-model'] == ""){
-          alert("Error: Save failed, Please provide gltf-model for object with name: " + id);
-          return;
-        } else{
-          let basicObject = {
-            "position": [0.0, 0.0, 0.0],
-            "scale": [1.0, 1.0, 1.0],
-            "rotation": [0.0, 0.0, 0.0],
-            "name": objName,
-            "asset_id": 1,
-            "next_objects": [
-              {
-                "id": 2,
-                "action": {
-                  "type": "text",
-                  "text_id": 1
-                }
+        let basicObject = {
+          "position": [0.0, 0.0, 0.0],
+          "scale": [1.0, 1.0, 1.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "name": objName,
+          "asset_id": 1,
+          "next_objects": [
+            {
+              "id": 2,
+              "action": {
+                "type": "text",
+                "text_id": 1
               }
-            ],
-            "is_interactable": false
-          }
-          let curChanges = AFRAME.INSPECTOR.history.updates[id];
-          for (const prop in curChanges){
-            if (prop == "position" || prop == "scale" || prop == "rotation"){
-              basicObject[prop] = curChanges[prop].split(" ").map(Number);
-            } else if (prop == "gltf-model"){
-              basicObject["asset_id"] = this.state.linkToIdMap[curChanges[prop]];
             }
-          }
-          const postUrl = getUrl + "/object";
-          basicObject.obj = id;
-          addObject(postUrl, basicObject, this);
+          ],
+          "is_interactable": false
         }
+        let curChanges = AFRAME.INSPECTOR.history.updates[id];
+        for (const prop in curChanges){
+          if (prop == "position" || prop == "scale" || prop == "rotation"){
+            basicObject[prop] = curChanges[prop].split(" ").map(Number);
+          } else if (prop == "gltf-model"){
+            basicObject["asset_id"] = this.state.linkToIdMap[curChanges[prop]];
+          }
+        }
+        const postUrl = getUrl + "/object";
+        basicObject.obj = id;
+        addObject(postUrl, basicObject, this);
         // here is where we want to create a new object
         // first strip the name's suffix (<>-!) - make sure to save the suffix
         // POST request to backend - this endpoint returns the entire object JSON
