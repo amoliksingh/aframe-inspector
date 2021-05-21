@@ -69,26 +69,6 @@ export default class Mixin extends React.Component {
   };
 
   render() {
-    return (
-      <div className="mixinOptions">
-        <div className="propertyRow">
-          <span className="text">mixins</span>
-          <span className="mixinValue">
-            <Select
-              id="mixinSelect"
-              classNamePrefix="select"
-              ref="select"
-              options={this.getMixinOptions()}
-              isMulti={true}
-              placeholder="Add mixin..."
-              noResultsText="No mixins found"
-              onChange={this.updateMixins.bind(this)}
-              simpleValue
-              value={this.state.mixins}
-            />
-          </span>
-        </div>
-      </div>
-    );
+    return null;
   }
 }
