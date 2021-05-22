@@ -54,6 +54,10 @@ export function updateEntity(entity, propertyName, value) {
  */
 export function removeEntity(entity, force) {
   if (entity) {
+    if (entity.id.endsWith("-background")){
+      alert("Error: Deleting background is prohibited");
+      return;
+    }
     if (
       force === true ||
       confirm(

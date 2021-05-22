@@ -28,7 +28,10 @@ export default class Component extends React.Component {
     this.state = {
       entity: this.props.entity,
       name: this.props.name,
-      nameList: []
+      nameList: [],
+      objectList: [],
+      backgroundList: [],
+      assetLinkToTypeMap: new Map()
     };
     this.setObjects(this);
   }
@@ -56,10 +59,20 @@ export default class Component extends React.Component {
     .then(function (response) {
       const assets = response.data.assets;
       let nameList = [];
+      let objectList = [];
+      let backgroundList = [];
+      let assetLinkToTypeMap = new Map();
       assets.forEach(function( item, index) {
-        nameList.push({ value: assetsUrl+item.s3_key, label: item.name })
+        nameList.push({ value: assetsUrl+item.s3_key, label: item.name });
+        if (item.obj_type == "background"){
+          backgroundList.push({ value: assetsUrl+item.s3_key, label: item.name });
+          assetLinkToTypeMap[assetsUrl+item.s3_key] = "background";
+        } else{
+          objectList.push({ value: assetsUrl+item.s3_key, label: item.name });
+          assetLinkToTypeMap[assetsUrl+item.s3_key] = "object";
+        }
       });
-      self.setState({ nameList });
+      self.setState({ nameList, objectList, backgroundList, assetLinkToTypeMap });
     });
   }
 
@@ -158,12 +171,17 @@ export default class Component extends React.Component {
           />
         );
       } else{
+        const whichAssetType = this.state.assetLinkToTypeMap[componentData.data];
+        let whichOptions = this.state.objectList;
+        if (whichAssetType == "background"){
+          whichOptions = this.state.backgroundList;
+        }
         return (
           <Select
             styles={customStyles}
             value={this.state.nameList.filter(option => option.value == componentData.data)}
             ref="select"
-            options={this.state.nameList}
+            options={whichOptions}
             placeholder="Add component..."
             noResultsText="No components found"
             searchable={true}
