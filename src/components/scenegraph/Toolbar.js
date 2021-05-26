@@ -7,6 +7,11 @@ require('dotenv').config();
 
 const LOCALSTORAGE_MOCAP_UI = 'aframeinspectormocapuienabled';
 
+function getCookie(name) {
+  const r = document.cookie.match("\\b" + name + "=([^;]*)\\b");
+  return r ? r[1] : undefined;
+}
+
 function filterHelpers(scene, visible) {
   scene.traverse(o => {
     if (o.userData.source === 'INSPECTOR') {
@@ -35,11 +40,15 @@ function slugify(text) {
     .replace(/-+$/, ''); // Trim - from end of text
 }
 
-async function updateObject(putUrl, object){
+async function updateObject(putUrl, object, objectId){
   axios.put(putUrl, object, {
     headers: {
         "Content-Type": "application/json",
-    },
+        "X-Xsrftoken": getCookie("_xsrf"),
+    }, withCredentials: true
+  })
+  .then(function (response) {
+    alert("Updated object with id: " + objectId);
   })
   .catch((error) => {
     if (error.response){
@@ -58,7 +67,8 @@ async function addObject(postUrl, object, refToToolbar){
   axios.post(postUrl, object, {
     headers: {
         "Content-Type": "application/json",
-    },
+        "X-Xsrftoken": getCookie("_xsrf"),
+    }, withCredentials: true
   })
   .then(function (response) {
     let newObjectId = response.data.id;
@@ -82,11 +92,15 @@ async function addObject(postUrl, object, refToToolbar){
   });
 }
 
-async function deleteObject(deleteUrl){
+async function deleteObject(deleteUrl, objectId){
   axios.delete(deleteUrl, {
     headers: {
         "Content-Type": "application/json",
-    },
+        "X-Xsrftoken": getCookie("_xsrf"),
+    }, withCredentials: true
+  })
+  .then(function (response) {
+    alert("Deleted object with id: " + objectId);
   })
   .catch((error) => {
     if (error.response){
@@ -268,7 +282,7 @@ export default class Toolbar extends React.Component {
             deletedObjectsString = deletedObjectsString + ", " + id.replace("-obj", "");
           }
           const deleteUrl = baseUrl + baseEndpoint + "scene/" + apiEndpointScene + "/object/" + id.replace("-obj", "");
-          deleteObject(deleteUrl);
+          deleteObject(deleteUrl, id.replace("-obj", ""));
         } else{
           objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
         }
@@ -318,9 +332,9 @@ export default class Toolbar extends React.Component {
       delete AFRAME.INSPECTOR.history.updates[id];
     }
 
-    if (deletedObjectsString.length > 0){
-      alert("The objects with the following ids were deleted: [ " + deletedObjectsString + " ]");
-    }
+    // if (deletedObjectsString.length > 0){
+    //   alert("The objects with the following ids were deleted: [ " + deletedObjectsString + " ]");
+    // }
 
     objectChanges.sort();
     objects.sort((a,b) => a.id - b.id);
@@ -352,7 +366,7 @@ export default class Toolbar extends React.Component {
           const curId = objects[i].id;
           delete objects[i].id;
           delete objects[i].asset_details;
-          updateObject(putUrl, objects[i]);
+          updateObject(putUrl, objects[i], curId);
           objects[i].id = curId;
         }
         j++;
@@ -361,9 +375,9 @@ export default class Toolbar extends React.Component {
     }
     this.setState({ objects });
     
-    if (changedObjectsString.length > 0){
-      alert("Changes to the following objects were made: [" + changedObjectsString + " ] were saved");
-    }
+    // if (changedObjectsString.length > 0){
+    //   alert("Changes to the following objects were made: [" + changedObjectsString + " ] were saved");
+    // }
   };
 
   toggleScenePlaying = () => {
