@@ -332,10 +332,6 @@ export default class Toolbar extends React.Component {
       delete AFRAME.INSPECTOR.history.updates[id];
     }
 
-    // if (deletedObjectsString.length > 0){
-    //   alert("The objects with the following ids were deleted: [ " + deletedObjectsString + " ]");
-    // }
-
     objectChanges.sort();
     objects.sort((a,b) => a.id - b.id);
 
@@ -374,10 +370,6 @@ export default class Toolbar extends React.Component {
       i++;
     }
     this.setState({ objects });
-    
-    // if (changedObjectsString.length > 0){
-    //   alert("Changes to the following objects were made: [" + changedObjectsString + " ] were saved");
-    // }
   };
 
   toggleScenePlaying = () => {
