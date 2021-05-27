@@ -236,8 +236,6 @@ export default class Toolbar extends React.Component {
     const getUrl = baseUrl + baseEndpoint + "scene/" + apiEndpointScene;
     let objects = this.state.objects;
     let objectChanges = [];
-    let changedObjectsString = "";
-    let deletedObjectsString = "";
 
     // validation of changes
     for(var id in AFRAME.INSPECTOR.history.updates){
@@ -276,11 +274,6 @@ export default class Toolbar extends React.Component {
         }
       } else if (id.endsWith("-obj")){
         if ("delete" in AFRAME.INSPECTOR.history.updates[id]){
-          if (deletedObjectsString == ""){
-            deletedObjectsString = id.replace("-obj", "");
-          } else{
-            deletedObjectsString = deletedObjectsString + ", " + id.replace("-obj", "");
-          }
           const deleteUrl = baseUrl + baseEndpoint + "scene/" + apiEndpointScene + "/object/" + id.replace("-obj", "");
           deleteObject(deleteUrl, id.replace("-obj", ""));
         } else{
@@ -357,7 +350,6 @@ export default class Toolbar extends React.Component {
           }
         }
         if (hasChanged){
-          changedObjectsString = changedObjectsString + " (" + objects[i].name  + ", id: " + objects[i].id + "),";
           const putUrl = getUrl + "/object/" + objects[i].id;
           const curId = objects[i].id;
           delete objects[i].id;
