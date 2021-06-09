@@ -1,6 +1,6 @@
 /* global AFRAME */
 import React from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, { object } from 'prop-types';
 import PropertyRow from './PropertyRow';
 import Collapsible from '../Collapsible';
 import Clipboard from 'clipboard';
@@ -31,7 +31,11 @@ export default class Component extends React.Component {
       nameList: [],
       objectList: [],
       backgroundList: [],
-      assetLinkToTypeMap: new Map()
+      assetLinkToTypeMap: new Map(),
+      checked: false,
+      puzzleType: "",
+      idToCheckedMap: new Map(),
+      idToPuzzleTypeMap: new Map()
     };
     this.setObjects(this);
   }
@@ -39,8 +43,9 @@ export default class Component extends React.Component {
   setObjects(self){
     const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
     const baseEndpoint = process.env.REACT_APP_ADMIN_BASE_ENDPOINT;
-    const getUrl = baseUrl + baseEndpoint + "assets";
+    var getUrl = baseUrl + baseEndpoint + "assets";
     const assetsUrl = process.env.REACT_APP_ADMIN_ASSET_PREFIX_URL;
+    const apiEndpointScene = AFRAME.scenes[0].getAttribute("id").replace("-scene", "");
 
     axios.get(getUrl, {
         headers: {
@@ -74,9 +79,39 @@ export default class Component extends React.Component {
       });
       self.setState({ nameList, objectList, backgroundList, assetLinkToTypeMap });
     });
+
+    getUrl = baseUrl + baseEndpoint + "scene/" + apiEndpointScene;
+    axios.get(getUrl, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+    .catch((error) => {
+      if (error.response){
+        alert("URL: " + getUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      } else if (error.request){
+        alert("No response from URL: " + getUrl);
+      } else{
+        alert(error.message);
+      }
+    })
+    .then(function (response) {
+      let idToCheckedMap = new Map();
+      let objects = response.data.objects;
+      // console.log(objects);
+      for (var i = 0; i < objects.length; i++ ){
+        idToCheckedMap[objects[i].id+"-obj"] = objects[i].is_interactable;
+        // if objects[i].is_inter then check puzzle type and put into map
+        // if puzzle type is text-pane, then set based json_data
+      }
+      // console.log(idToCheckedMap);
+      self.setState({ idToCheckedMap });
+    });
   }
 
   componentDidMount() {
+    this.toggleButton = this.toggleButton.bind(this);
+    this.selectPuzzleType = this.selectPuzzleType.bind(this);
     var clipboard = new Clipboard(
       '[data-action="copy-component-to-clipboard"]',
       {
@@ -141,10 +176,27 @@ export default class Component extends React.Component {
     updateEntity.apply(this, [this.props.entity, this.props.name, obj.value]);
   }
 
+  selectPuzzleType = obj => {
+    this.setState({
+      puzzleType: obj.value
+    });
+  }
+
+  toggleButton = button => {
+    const objId = this.props.entity.getAttribute("id");//.replace("-obj", "");
+    let idToCheckedMap = this.state.idToCheckedMap;
+    if (!(objId in this.state.idToCheckedMap)){
+      idToCheckedMap[objId] = true;
+    } else{
+      idToCheckedMap[objId] = !this.state.idToCheckedMap[objId];
+    }
+    this.setState({ idToCheckedMap });
+  }
   /**
    * Render propert(ies) of the component.
    */
   renderPropertyRows = () => {
+    const puzzleTypeList = [{ value: "text-pane", label: "text-pane-label" }];
     const componentData = this.props.component;
     const customStyles = {
       option: (provided, state) => ({
@@ -176,17 +228,39 @@ export default class Component extends React.Component {
         if (whichAssetType == "background"){
           whichOptions = this.state.backgroundList;
         }
+        const objId = this.props.entity.getAttribute("id");//.replace("-obj", "");
+        let isObjChecked = false;
+        if (objId in this.state.idToCheckedMap){
+          isObjChecked = this.state.idToCheckedMap[objId];
+        }
         return (
-          <Select
-            styles={customStyles}
-            value={this.state.nameList.filter(option => option.value == componentData.data)}
-            ref="select"
-            options={whichOptions}
-            placeholder="Add component..."
-            noResultsText="No components found"
-            searchable={true}
-            onChange={this.selectOption}
-          />
+          <div>
+            <Select
+              styles={customStyles}
+              value={this.state.nameList.filter(option => option.value == componentData.data)}
+              ref="select"
+              options={whichOptions}
+              placeholder="Add component..."
+              noResultsText="No components found"
+              searchable={true}
+              onChange={this.selectOption}
+            />
+            <div>
+              <label for="subscribeNews">Interactable?</label>
+              <input type="checkbox" id="subscribeNews" name="subscribe" value="newsletter" checked={isObjChecked} onChange={this.toggleButton}></input>
+            </div>
+            {isObjChecked ? (<Select
+              styles={customStyles}
+              //value={puzzleTypeList.filter(option => option.value == componentData.data)}
+              ref="select"
+              options={puzzleTypeList}
+              placeholder="Select puzzle type..."
+              noResultsText="No puzzle types found"
+              searchable={true}
+              onChange={this.selectPuzzleType}
+            />) : null}
+            {isObjChecked && puzzleType === "text-pane" ? (<p>methodToRenderTextPanes</p>): null}
+          </div>
         );
       }
     }
@@ -213,6 +287,8 @@ export default class Component extends React.Component {
       subComponentName = componentName;
       componentName = componentName.substr(0, componentName.indexOf('__'));
     }
+    // alert(componentName);
+    // alert(subComponentName);
 
     return (
       <Collapsible collapsed={this.props.isCollapsed}>
