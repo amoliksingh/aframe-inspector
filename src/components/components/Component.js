@@ -25,7 +25,8 @@ class GltfPopUp extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      puzzleType: ""
+      puzzleType: "",
+      newText: ""
     };
   }
 
@@ -41,6 +42,9 @@ class GltfPopUp extends React.Component {
     this.setState({
       puzzleType: obj.value
     });
+    if (obj.value === "text-pane"){
+      this.props.selectTextPane();
+    }
   }
   
   toggleButton() {
@@ -51,12 +55,22 @@ class GltfPopUp extends React.Component {
     this.props.handleRemove(text);
   }
 
+  handleChange(event){
+    this.setState({ newText : event.target.value });
+  }
+
+  handleAdd(text){
+    this.props.handleAdd(this.state.newText);
+  }
+
   componentDidMount() {
     this.closeModal = this.closeModal.bind(this);
     this.saveModal = this.saveModal.bind(this);
     this.selectPuzzleType = this.selectPuzzleType.bind(this);
     this.toggleButton = this.toggleButton.bind(this);
     this.handleRemove = this.handleRemove.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+    this.handleAdd = this.handleAdd.bind(this);
   }
 
   render() {
@@ -87,16 +101,24 @@ class GltfPopUp extends React.Component {
       />) : null}
       {isObjChecked && this.props.objData.componentType === "text-pane" ? 
       (
-        <ul>
-          {this.props.objData.jsonData.data.map((item) => (
-            <li key={item.text}>
-              <span>{item.text}</span>
-              <button type="button" onClick={() => this.handleRemove(item.text)}>
-                Remove
-              </button>
-            </li>
-          ))}
-        </ul>
+        <div>
+          <ul>
+            {this.props.objData.jsonData.data.map((item) => (
+              <li key={item.text}>
+                <span>{item.text}</span>
+                <button type="button" onClick={() => this.handleRemove(item.text)}>
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div>
+            <input type="text" onChange={this.handleChange} />
+            <button type="button" onClick={this.handleAdd}>
+              Add
+            </button>
+          </div>
+        </div>
       ): null}
 
       <div className="w3-container w3-border-top w3-padding-16 w3-light-grey">
@@ -129,7 +151,6 @@ export default class Component extends React.Component {
       backgroundList: [],
       assetLinkToTypeMap: new Map(),
       checked: false,
-      puzzleType: "",
       idToCheckedMap: new Map(),
       idToPuzzleTypeMap: new Map(),
       idToDataMap: new Map(),
@@ -216,6 +237,9 @@ export default class Component extends React.Component {
     this.savePopup = this.savePopup.bind(this);
     this.toggleButton = this.toggleButton.bind(this);
     this.handleRemove = this.handleRemove.bind(this);
+    this.handleAdd = this.handleAdd.bind(this);
+    this.selectTextPane = this.selectTextPane.bind(this);
+
     var clipboard = new Clipboard(
       '[data-action="copy-component-to-clipboard"]',
       {
@@ -288,13 +312,7 @@ export default class Component extends React.Component {
     let idToDataMap = this.state.idToDataMap;
     let originalDataMap = this.state.originalDataMap;
     const id = this.props.entity.getAttribute("id");
-    console.log("before");
-    console.log(this.state.idToDataMap[id].jsonData.data);
-    console.log(this.state.originalDataMap[id].jsonData.data);
-    idToDataMap[id].jsonData.data = originalDataMap[id].jsonData.data;
-    console.log("after");
-    console.log(this.state.idToDataMap[id].jsonData.data);
-    console.log(this.state.originalDataMap[id].jsonData.data);
+    idToDataMap[id] = JSON.parse(JSON.stringify(originalDataMap[id]));
     this.setState({ idToDataMap: idToDataMap, popupView: 'none' });
   }
 
@@ -311,6 +329,14 @@ export default class Component extends React.Component {
     this.setState({ idToDataMap });
   }
 
+  handleAdd(text){
+    let idToDataMap = this.state.idToDataMap;
+    const id = this.props.entity.getAttribute("id");
+    const newList = idToDataMap[id].jsonData.data.concat({ "text" : text });
+    idToDataMap[id].jsonData.data = newList
+    this.setState({ idToDataMap });
+  }
+
   toggleButton() {
     const objId = this.props.entity.getAttribute("id");//.replace("-obj", "");
     let idToCheckedMap = this.state.idToCheckedMap;
@@ -320,6 +346,13 @@ export default class Component extends React.Component {
       idToCheckedMap[objId] = !this.state.idToCheckedMap[objId];
     }
     this.setState({ idToCheckedMap });
+  }
+
+  selectTextPane() {
+    const objId = this.props.entity.getAttribute("id");//.replace("-obj", "");
+    let idToDataMap = this.state.idToDataMap;
+    idToDataMap[objId].componentType = "text-pane";
+    this.setState({ idToDataMap });
   }
   /**
    * Render propert(ies) of the component.
@@ -385,6 +418,8 @@ export default class Component extends React.Component {
               toggleButton={this.toggleButton}
               objData={objData}
               handleRemove={this.handleRemove}
+              handleAdd={this.handleAdd}
+              selectTextPane={this.selectTextPane}
             />
             {objId.endsWith("-obj") ? <button onClick={this.showPopup} className="w3-button w3-green w3-large">Edit Puzzle Type</button> : null}
           </div>
