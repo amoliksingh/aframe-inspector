@@ -20,37 +20,60 @@ class GltfPopUp extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      popupView: this.props.popupView
+      puzzleType: ""
     };
   }
 
   closeModal() {
-    this.setState({ popupView:'none' });
+    this.props.closePopup();
+  }
+
+  selectPuzzleType = obj => {
+    this.setState({
+      puzzleType: obj.value
+    });
+  }
+  
+  toggleButton() {
+    this.props.toggleButton();
+  }
+
+  componentDidMount() {
+    this.closeModal = this.closeModal.bind(this);
+    this.selectPuzzleType = this.selectPuzzleType.bind(this);
+    this.toggleButton = this.toggleButton.bind(this);
   }
 
   render() {
-    return <div id="id01" className="w3-modal" style={{display:this.state.popupView}}>
+    const puzzleTypeList = [{ value: "text-pane", label: "text-pane" }, { value: "rotation-controls", label: "rotation-controls" }, 
+    { value: "keypad", label: "keypad" }, { value: "visual-pane", label: "visual-pane" }, 
+    { value: "jigsaw-puzzle", label: "jigsaw-puzzle" }, { value: "ordered-puzzle", label: "ordered-puzzle" }];
+    var isObjChecked = this.props.isObjChecked;
+
+    return <div id="id01" className="w3-modal" style={{display:this.props.popupView}}>
     <div className="w3-modal-content w3-card-4 w3-animate-zoom" style={{maxWidth:"600px"}}>
 
       <div className="w3-center"><br/>
         <span onClick={this.closeModal} className="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
-        <img src="img_avatar4.png" alt="Avatar" style={{width:"30%"}} className="w3-circle w3-margin-top"/>
       </div>
 
-      <form className="w3-container" action="/action_page.php">
-        <div className="w3-section">
-          <label><b>Username</b></label>
-          <input className="w3-input w3-border w3-margin-bottom" type="text" placeholder="Enter Username" name="usrname" required/>
-          <label><b>Password</b></label>
-          <input className="w3-input w3-border" type="password" placeholder="Enter Password" name="psw" required/>
-          <button className="w3-button w3-block w3-green w3-section w3-padding" type="submit">Login</button>
-          <input className="w3-check w3-margin-top" type="checkbox" checked="checked"/> Remember me
-        </div>
-      </form>
+      <div>
+        <label for="subscribeNews">Interactable?</label>
+        <input type="checkbox" id="subscribeNews" name="subscribe" value="newsletter" checked={isObjChecked} onChange={this.toggleButton}></input>
+      </div>
+      {isObjChecked ? (<Select
+        value={puzzleTypeList.filter(option => option.value == this.props.objData.componentType)}
+        ref="select"
+        options={puzzleTypeList}
+        placeholder="Select puzzle type..."
+        noResultsText="No puzzle types found"
+        searchable={true}
+        onChange={this.selectPuzzleType}
+      />) : null}
+      {isObjChecked && this.props.objData.componentType === "text-pane" ? (<p>methodToRenderTextPanes</p>): null}
 
       <div className="w3-container w3-border-top w3-padding-16 w3-light-grey">
-        <button onclick={this.closeModal} type="button" className="w3-button w3-red">Cancel</button>
-        <span className="w3-right w3-padding w3-hide-small">Forgot <a href="#">password?</a></span>
+        <button onClick={this.closeModal} type="button" className="w3-button w3-red">Cancel</button>
       </div>
 
     </div>
@@ -81,6 +104,7 @@ export default class Component extends React.Component {
       puzzleType: "",
       idToCheckedMap: new Map(),
       idToPuzzleTypeMap: new Map(),
+      idToDataMap: new Map(),
       popupView: 'none'
     };
     this.setObjects(this);
@@ -143,21 +167,22 @@ export default class Component extends React.Component {
     })
     .then(function (response) {
       let idToCheckedMap = new Map();
+      let idToDataMap = new Map();
       let objects = response.data.objects;
-      // console.log(objects);
       for (var i = 0; i < objects.length; i++ ){
         idToCheckedMap[objects[i].id+"-obj"] = objects[i].is_interactable;
+        idToDataMap[objects[i].id+"-obj"] = objects[i].animations_json.blackboardData;
         // if objects[i].is_inter then check puzzle type and put into map
         // if puzzle type is text-pane, then set based json_data
       }
-      // console.log(idToCheckedMap);
-      self.setState({ idToCheckedMap });
+      self.setState({ idToCheckedMap, idToDataMap });
     });
   }
 
   componentDidMount() {
+    this.showPopup = this.showPopup.bind(this);
+    this.closePopup = this.closePopup.bind(this);
     this.toggleButton = this.toggleButton.bind(this);
-    this.selectPuzzleType = this.selectPuzzleType.bind(this);
     var clipboard = new Clipboard(
       '[data-action="copy-component-to-clipboard"]',
       {
@@ -222,13 +247,15 @@ export default class Component extends React.Component {
     updateEntity.apply(this, [this.props.entity, this.props.name, obj.value]);
   }
 
-  selectPuzzleType = obj => {
-    this.setState({
-      puzzleType: obj.value
-    });
+  showPopup() {
+    this.setState({ popupView: 'block' });
   }
 
-  toggleButton = button => {
+  closePopup() {
+    this.setState({ popupView: 'none' });
+  }
+
+  toggleButton() {
     const objId = this.props.entity.getAttribute("id");//.replace("-obj", "");
     let idToCheckedMap = this.state.idToCheckedMap;
     if (!(objId in this.state.idToCheckedMap)){
@@ -238,15 +265,10 @@ export default class Component extends React.Component {
     }
     this.setState({ idToCheckedMap });
   }
-
-  showPopup() {
-    this.setState({ popupView: 'none' });
-  }
   /**
    * Render propert(ies) of the component.
    */
   renderPropertyRows = () => {
-    const puzzleTypeList = [{ value: "text-pane", label: "text-pane-label" }];
     const componentData = this.props.component;
     const customStyles = {
       option: (provided, state) => ({
@@ -280,8 +302,12 @@ export default class Component extends React.Component {
         }
         const objId = this.props.entity.getAttribute("id");//.replace("-obj", "");
         let isObjChecked = false;
+        let objData = null;
         if (objId in this.state.idToCheckedMap){
           isObjChecked = this.state.idToCheckedMap[objId];
+        }
+        if (objId in this.state.idToDataMap){
+          objData = this.state.idToDataMap[objId];
         }
         return (
           <div>
@@ -297,23 +323,12 @@ export default class Component extends React.Component {
             />
             <GltfPopUp
               popupView={this.state.popupView}
+              isObjChecked={isObjChecked}
+              closePopup={this.closePopup}
+              toggleButton={this.toggleButton}
+              objData={objData}
             />
             {objId.endsWith("-obj") ? <button onClick={this.showPopup} className="w3-button w3-green w3-large">Edit Puzzle Type</button> : null}
-            <div>
-              <label for="subscribeNews">Interactable?</label>
-              <input type="checkbox" id="subscribeNews" name="subscribe" value="newsletter" checked={isObjChecked} onChange={this.toggleButton}></input>
-            </div>
-            {isObjChecked ? (<Select
-              styles={customStyles}
-              //value={puzzleTypeList.filter(option => option.value == componentData.data)}
-              ref="select"
-              options={puzzleTypeList}
-              placeholder="Select puzzle type..."
-              noResultsText="No puzzle types found"
-              searchable={true}
-              onChange={this.selectPuzzleType}
-            />) : null}
-            {/* {isObjChecked && puzzleType === "text-pane" ? (<p>methodToRenderTextPanes</p>): null} */}
           </div>
         );
       }
