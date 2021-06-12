@@ -13,6 +13,50 @@ import "./w3.css";
 
 const isSingleProperty = AFRAME.schema.isSingleProperty;
 
+class GltfPopUp extends React.Component {
+  static propTypes = {
+  };
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      popupView: this.props.popupView
+    };
+  }
+
+  closeModal() {
+    this.setState({ popupView:'none' });
+  }
+
+  render() {
+    return <div id="id01" className="w3-modal" style={{display:this.state.popupView}}>
+    <div className="w3-modal-content w3-card-4 w3-animate-zoom" style={{maxWidth:"600px"}}>
+
+      <div className="w3-center"><br/>
+        <span onClick={this.closeModal} className="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
+        <img src="img_avatar4.png" alt="Avatar" style={{width:"30%"}} className="w3-circle w3-margin-top"/>
+      </div>
+
+      <form className="w3-container" action="/action_page.php">
+        <div className="w3-section">
+          <label><b>Username</b></label>
+          <input className="w3-input w3-border w3-margin-bottom" type="text" placeholder="Enter Username" name="usrname" required/>
+          <label><b>Password</b></label>
+          <input className="w3-input w3-border" type="password" placeholder="Enter Password" name="psw" required/>
+          <button className="w3-button w3-block w3-green w3-section w3-padding" type="submit">Login</button>
+          <input className="w3-check w3-margin-top" type="checkbox" checked="checked"/> Remember me
+        </div>
+      </form>
+
+      <div className="w3-container w3-border-top w3-padding-16 w3-light-grey">
+        <button onclick={this.closeModal} type="button" className="w3-button w3-red">Cancel</button>
+        <span className="w3-right w3-padding w3-hide-small">Forgot <a href="#">password?</a></span>
+      </div>
+
+    </div>
+  </div>
+  }
+}
 /**
  * Single component.
  */
@@ -36,7 +80,8 @@ export default class Component extends React.Component {
       checked: false,
       puzzleType: "",
       idToCheckedMap: new Map(),
-      idToPuzzleTypeMap: new Map()
+      idToPuzzleTypeMap: new Map(),
+      popupView: 'none'
     };
     this.setObjects(this);
   }
@@ -193,6 +238,10 @@ export default class Component extends React.Component {
     }
     this.setState({ idToCheckedMap });
   }
+
+  showPopup() {
+    this.setState({ popupView: 'none' });
+  }
   /**
    * Render propert(ies) of the component.
    */
@@ -246,33 +295,10 @@ export default class Component extends React.Component {
               searchable={true}
               onChange={this.selectOption}
             />
-            <div id="id01" className="w3-modal">
-              <div className="w3-modal-content w3-card-4 w3-animate-zoom" style={{maxWidth:"600px"}}>
-
-                <div className="w3-center"><br/>
-                  <span onClick="document.getElementById('id01').style.display='none'" className="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
-                  <img src="img_avatar4.png" alt="Avatar" style={{width:"30%"}} className="w3-circle w3-margin-top"/>
-                </div>
-
-                <form className="w3-container" action="/action_page.php">
-                  <div className="w3-section">
-                    <label><b>Username</b></label>
-                    <input className="w3-input w3-border w3-margin-bottom" type="text" placeholder="Enter Username" name="usrname" required/>
-                    <label><b>Password</b></label>
-                    <input className="w3-input w3-border" type="password" placeholder="Enter Password" name="psw" required/>
-                    <button className="w3-button w3-block w3-green w3-section w3-padding" type="submit">Login</button>
-                    <input className="w3-check w3-margin-top" type="checkbox" checked="checked"/> Remember me
-                  </div>
-                </form>
-
-                <div className="w3-container w3-border-top w3-padding-16 w3-light-grey">
-                  <button onclick="document.getElementById('id01').style.display='none'" type="button" className="w3-button w3-red">Cancel</button>
-                  <span className="w3-right w3-padding w3-hide-small">Forgot <a href="#">password?</a></span>
-                </div>
-
-              </div>
-            </div>
-            {objId.endsWith("-obj") ? <button onClick="document.getElementById('id01').style.display='block'" className="w3-button w3-green w3-large">Edit Puzzle Type</button> : null}
+            <GltfPopUp
+              popupView={this.state.popupView}
+            />
+            {objId.endsWith("-obj") ? <button onClick={this.showPopup} className="w3-button w3-green w3-large">Edit Puzzle Type</button> : null}
             <div>
               <label for="subscribeNews">Interactable?</label>
               <input type="checkbox" id="subscribeNews" name="subscribe" value="newsletter" checked={isObjChecked} onChange={this.toggleButton}></input>
