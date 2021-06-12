@@ -13,6 +13,11 @@ import "./w3.css";
 
 const isSingleProperty = AFRAME.schema.isSingleProperty;
 
+function getCookie(name) {
+  const r = document.cookie.match("\\b" + name + "=([^;]*)\\b");
+  return r ? r[1] : undefined;
+}
+
 class GltfPopUp extends React.Component {
   static propTypes = {
   };
@@ -28,6 +33,10 @@ class GltfPopUp extends React.Component {
     this.props.closePopup();
   }
 
+  saveModal() {
+    this.props.savePopup();
+  }
+
   selectPuzzleType = obj => {
     this.setState({
       puzzleType: obj.value
@@ -38,10 +47,16 @@ class GltfPopUp extends React.Component {
     this.props.toggleButton();
   }
 
+  handleRemove(text){
+    this.props.handleRemove(text);
+  }
+
   componentDidMount() {
     this.closeModal = this.closeModal.bind(this);
+    this.saveModal = this.saveModal.bind(this);
     this.selectPuzzleType = this.selectPuzzleType.bind(this);
     this.toggleButton = this.toggleButton.bind(this);
+    this.handleRemove = this.handleRemove.bind(this);
   }
 
   render() {
@@ -70,10 +85,23 @@ class GltfPopUp extends React.Component {
         searchable={true}
         onChange={this.selectPuzzleType}
       />) : null}
-      {isObjChecked && this.props.objData.componentType === "text-pane" ? (<p>methodToRenderTextPanes</p>): null}
+      {isObjChecked && this.props.objData.componentType === "text-pane" ? 
+      (
+        <ul>
+          {this.props.objData.jsonData.data.map((item) => (
+            <li key={item.text}>
+              <span>{item.text}</span>
+              <button type="button" onClick={() => this.handleRemove(item.text)}>
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      ): null}
 
       <div className="w3-container w3-border-top w3-padding-16 w3-light-grey">
         <button onClick={this.closeModal} type="button" className="w3-button w3-red">Cancel</button>
+        <button onClick={this.saveModal} type="button" className="w3-button w3-green">Save</button>
       </div>
 
     </div>
@@ -105,7 +133,8 @@ export default class Component extends React.Component {
       idToCheckedMap: new Map(),
       idToPuzzleTypeMap: new Map(),
       idToDataMap: new Map(),
-      popupView: 'none'
+      originalDataMap: new Map(),
+      popupView: 'none',
     };
     this.setObjects(this);
   }
@@ -168,21 +197,25 @@ export default class Component extends React.Component {
     .then(function (response) {
       let idToCheckedMap = new Map();
       let idToDataMap = new Map();
+      let originalDataMap = new Map();
       let objects = response.data.objects;
       for (var i = 0; i < objects.length; i++ ){
         idToCheckedMap[objects[i].id+"-obj"] = objects[i].is_interactable;
         idToDataMap[objects[i].id+"-obj"] = objects[i].animations_json.blackboardData;
+        originalDataMap[objects[i].id+"-obj"] = JSON.parse(JSON.stringify(objects[i].animations_json.blackboardData));
         // if objects[i].is_inter then check puzzle type and put into map
         // if puzzle type is text-pane, then set based json_data
       }
-      self.setState({ idToCheckedMap, idToDataMap });
+      self.setState({ idToCheckedMap, idToDataMap, originalDataMap });
     });
   }
 
   componentDidMount() {
     this.showPopup = this.showPopup.bind(this);
     this.closePopup = this.closePopup.bind(this);
+    this.savePopup = this.savePopup.bind(this);
     this.toggleButton = this.toggleButton.bind(this);
+    this.handleRemove = this.handleRemove.bind(this);
     var clipboard = new Clipboard(
       '[data-action="copy-component-to-clipboard"]',
       {
@@ -252,7 +285,30 @@ export default class Component extends React.Component {
   }
 
   closePopup() {
+    let idToDataMap = this.state.idToDataMap;
+    let originalDataMap = this.state.originalDataMap;
+    const id = this.props.entity.getAttribute("id");
+    console.log("before");
+    console.log(this.state.idToDataMap[id].jsonData.data);
+    console.log(this.state.originalDataMap[id].jsonData.data);
+    idToDataMap[id].jsonData.data = originalDataMap[id].jsonData.data;
+    console.log("after");
+    console.log(this.state.idToDataMap[id].jsonData.data);
+    console.log(this.state.originalDataMap[id].jsonData.data);
+    this.setState({ idToDataMap: idToDataMap, popupView: 'none' });
+  }
+
+  savePopup() {
+    // request to save
     this.setState({ popupView: 'none' });
+  }
+
+  handleRemove(text){
+    let idToDataMap = this.state.idToDataMap;
+    const id = this.props.entity.getAttribute("id");
+    const newList = idToDataMap[id].jsonData.data.filter((item) => item.text !== text);
+    idToDataMap[id].jsonData.data = newList
+    this.setState({ idToDataMap });
   }
 
   toggleButton() {
@@ -325,8 +381,10 @@ export default class Component extends React.Component {
               popupView={this.state.popupView}
               isObjChecked={isObjChecked}
               closePopup={this.closePopup}
+              savePopup={this.savePopup}
               toggleButton={this.toggleButton}
               objData={objData}
+              handleRemove={this.handleRemove}
             />
             {objId.endsWith("-obj") ? <button onClick={this.showPopup} className="w3-button w3-green w3-large">Edit Puzzle Type</button> : null}
           </div>
