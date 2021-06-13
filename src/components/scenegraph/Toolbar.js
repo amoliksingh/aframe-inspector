@@ -117,8 +117,9 @@ async function editBackground(sceneUrl, sceneBody, backgroundModelChanged=false)
   axios.put(sceneUrl, sceneBody, {
     headers: {
         "Content-Type": "application/json",
-    },
-  })
+        "X-Xsrftoken": getCookie("_xsrf"),
+      }, withCredentials: true
+    })
   .then(function (response) {
     alert("Changes to the background were saved");
     // if background model changed, also need to update screenshot
