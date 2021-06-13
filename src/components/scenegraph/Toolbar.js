@@ -113,7 +113,7 @@ async function deleteObject(deleteUrl, objectId){
   });
 }
 
-async function editBackground(sceneUrl, sceneBody){
+async function editBackground(sceneUrl, sceneBody, backgroundModelChanged=false){
   axios.put(sceneUrl, sceneBody, {
     headers: {
         "Content-Type": "application/json",
@@ -121,6 +121,10 @@ async function editBackground(sceneUrl, sceneBody){
   })
   .then(function (response) {
     alert("Changes to the background were saved");
+    // if background model changed, also need to update screenshot
+    if(backgroundModelChanged){
+      window.takeSceneScreenshot(response.data.s3_key);
+    }
   })
   .catch((error) => {
     if (error.response){
@@ -178,6 +182,8 @@ export default class Toolbar extends React.Component {
       delete sceneBody.id;
       delete sceneBody.hints;
       delete sceneBody.object_ids;
+      delete sceneBody.screenshot_url;
+      delete sceneBody.s3_key;
       self.setState({ objects, sceneBody });
     });
 
@@ -252,6 +258,7 @@ export default class Toolbar extends React.Component {
       if (id.endsWith("-background")){
         let sceneBody = this.state.sceneBody;
         let hasChanged = false;
+        let backgroundModelChanged = false;
         const changes = AFRAME.INSPECTOR.history.updates[id];
         for (const prop in changes){
           if (prop == "position" || prop == "scale" || prop == "rotation"){
@@ -264,13 +271,14 @@ export default class Toolbar extends React.Component {
             const newAssetId = this.state.linkToIdMap[changes[prop]];
             if (sceneBody["background_id"] != newAssetId){
               hasChanged = true;
+              backgroundModelChanged = true;
               sceneBody["background_id"] = newAssetId;
             }
           }
         }
         if (hasChanged){
           this.setState({ sceneBody });
-          editBackground(getUrl, sceneBody);
+          editBackground(getUrl, sceneBody, backgroundModelChanged);
         }
       } else if (id.endsWith("-obj")){
         if ("delete" in AFRAME.INSPECTOR.history.updates[id]){
