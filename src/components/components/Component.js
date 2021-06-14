@@ -50,11 +50,25 @@ class GltfPopUp extends React.Component {
   }
 
   handleChange(event){
-    this.setState({ newText : event.target.value });
+    // const reg = new RegExp("^[\:\?\!\.,a-zA-Z0-9 _-]{1,200}$").test(
+    //   event.target.value
+    // );
+    // if (!reg) {
+    //     alert("Only characters allowed are alphanumeric (a-z, A-Z, 0-9), dashes (- and _), and spaces");
+    // } else{
+      this.setState({ newText : event.target.value });
+    // }
   }
 
   handleAdd(text){
-    this.props.handleAdd(this.state.newText);
+    // const reg = new RegExp("^[\:\?\!\.,a-zA-Z0-9 _-]{1,200}$").test(
+    //   text
+    // );
+    // if (!reg) {
+    //     alert("Only characters allowed are alphanumeric (a-z, A-Z, 0-9), dashes (- and _), and spaces");
+    // } else{
+      this.props.handleAdd(this.state.newText);
+    // }
   }
 
   componentDidMount() {
@@ -312,6 +326,36 @@ export default class Component extends React.Component {
 
   savePopup() {
     // request to save
+    const id = this.props.entity.getAttribute("id");
+    const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
+    const baseEndpoint = process.env.REACT_APP_ADMIN_BASE_ENDPOINT;
+    const apiEndpointScene = AFRAME.scenes[0].getAttribute("id").replace("-scene", "");
+    const putUrl = baseUrl + baseEndpoint + "scene/" + apiEndpointScene + "/object/" + id.replace("-obj", "") + "/puzzle"
+    const objBody = {
+      "is_interactable": this.state.idToCheckedMap[id],
+      "animations_json": {
+        "blackboard_data": this.state.idToDataMap[id]
+      }
+    }
+    axios.put(putUrl, objBody, {
+      headers: {
+          "Content-Type": "application/json",
+          "X-Xsrftoken": getCookie("_xsrf"),
+      }, withCredentials: true
+    })
+    .then(function (response) {
+      alert("Updated puzzle details for object with id: " + id.replace("-obj", ""));
+      console.log(response);
+    })
+    .catch((error) => {
+      if (error.response){
+        alert("URL: " + putUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      } else if (error.request){
+        alert("No response from URL: " + putUrl);
+      } else{
+        alert(error.message);
+      }
+    });
     this.setState({ popupView: 'none' });
   }
 
