@@ -334,7 +334,7 @@ export default class Component extends React.Component {
     const objBody = {
       "is_interactable": this.state.idToCheckedMap[id],
       "animations_json": {
-        "blackboard_data": this.state.idToDataMap[id]
+        "blackboardData": this.state.idToDataMap[id]
       }
     }
     axios.put(putUrl, objBody, {
