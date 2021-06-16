@@ -86,6 +86,7 @@ class GltfPopUp extends React.Component {
     { value: "keypad", label: "keypad" }, { value: "visual-pane", label: "visual-pane" }, 
     { value: "jigsaw-puzzle", label: "jigsaw-puzzle" }, { value: "ordered-puzzle", label: "ordered-puzzle" }];
     var isObjChecked = this.props.isObjChecked;
+    var iframeLink = "http://localhost:3000/admin/scene/3/object/4";
 
     return <div id="id01" className="w3-modal" style={{display:this.props.popupView}}>
     <div className="w3-modal-content w3-card-4 w3-animate-zoom" style={{maxWidth:"600px"}}>
@@ -94,11 +95,11 @@ class GltfPopUp extends React.Component {
         <span onClick={this.closeModal} className="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
       </div>
 
-      <div>
+      {/* <div>
         <label for="subscribeNews">Interactable?</label>
         <input type="checkbox" id="subscribeNews" name="subscribe" value="newsletter" checked={isObjChecked} onChange={this.toggleButton}></input>
-      </div>
-      {isObjChecked ? (<Select
+      </div> */}
+      {/* {isObjChecked ? (<Select
         value={puzzleTypeList.filter(option => option.value == this.props.objData.componentType)}
         ref="select"
         options={puzzleTypeList}
@@ -128,7 +129,9 @@ class GltfPopUp extends React.Component {
             </button>
           </div>
         </div>
-      ): null}
+      ): null} */}
+      <iframe src={iframeLink} title="Test">
+        </iframe>
 
       <div className="w3-container w3-border-top w3-padding-16 w3-light-grey">
         <button onClick={this.closeModal} type="button" className="w3-button w3-red">Cancel</button>
