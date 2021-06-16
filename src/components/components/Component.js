@@ -33,16 +33,16 @@ class GltfPopUp extends React.Component {
     var iframeLink = "http://localhost:3000/admin/scene/" + this.props.sceneId + "/object/" + this.props.objectId;
 
     return <div id="id01" className="w3-modal" style={{display:this.props.popupView}}>
-    <div className="w3-modal-content w3-card-4 w3-animate-zoom" style={{maxWidth:"600px"}}>
+    <div className="w3-modal-content w3-card-4 w3-animate-zoom" style={{width:"70%", height:"70%"}}>
 
       <div className="w3-center"><br/>
         <span onClick={this.closeModal} className="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
       </div>
 
-      <div>
-      <iframe src={iframeLink} title="Test">
-        </iframe>
+      <div style={{height: "800px"}}>
+        <iframe src={iframeLink} title="Test" style={{height: "100%", width: "95%"}}></iframe>
       </div>
+
       <div className="w3-container w3-border-top w3-padding-16 w3-light-grey">
         <button onClick={this.closeModal} type="button" className="w3-button w3-red">Cancel</button>
       </div>
