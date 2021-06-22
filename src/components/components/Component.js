@@ -30,7 +30,8 @@ class GltfPopUp extends React.Component {
   }
 
   render() {
-    var iframeLink = "http://localhost:3000/admin/scene/" + this.props.sceneId + "/object/" + this.props.objectId;
+    var frontendSceneUrl = process.env.REACT_APP_ADMIN_FRONTEND_SCENE_URL;
+    var iframeLink = frontendSceneUrl + this.props.sceneId + "/object/" + this.props.objectId;
 
     return <div id="id01" className="w3-modal" style={{display:this.props.popupView}}>
     <div className="w3-modal-content w3-card-4 w3-animate-zoom" style={{width:"70%", height:"100%"}}>
@@ -245,13 +246,16 @@ export default class Component extends React.Component {
               searchable={true}
               onChange={this.selectOption}
             />
-            <GltfPopUp
-              popupView={this.state.popupView}
-              sceneId={AFRAME.scenes[0].getAttribute("id").replace("-scene", "")}
-              objectId={objId.replace("-obj", "")}
-              closePopup={this.closePopup}
-            />
-            {objId.endsWith("-obj") ? <button onClick={this.showPopup} className="w3-button w3-green w3-large">Edit Puzzle Type</button> : null}
+            {objId.endsWith("-obj") ? 
+            <div>
+              <GltfPopUp
+                popupView={this.state.popupView}
+                sceneId={AFRAME.scenes[0].getAttribute("id").replace("-scene", "")}
+                objectId={objId.replace("-obj", "")}
+                closePopup={this.closePopup}
+              />
+              <button onClick={this.showPopup} className="w3-button w3-green w3-large">Edit Puzzle Type</button>
+            </div> : null}
           </div>
         );
       }
