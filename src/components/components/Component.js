@@ -72,10 +72,6 @@ export default class Component extends React.Component {
       objectList: [],
       backgroundList: [],
       assetLinkToTypeMap: new Map(),
-      checked: false,
-      idToCheckedMap: new Map(),
-      idToDataMap: new Map(),
-      originalDataMap: new Map(),
       popupView: 'none',
     };
     this.setObjects(this);
@@ -283,8 +279,6 @@ export default class Component extends React.Component {
       subComponentName = componentName;
       componentName = componentName.substr(0, componentName.indexOf('__'));
     }
-    // alert(componentName);
-    // alert(subComponentName);
 
     return (
       <Collapsible collapsed={this.props.isCollapsed}>
