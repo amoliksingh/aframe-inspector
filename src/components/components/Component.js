@@ -40,8 +40,8 @@ class GltfPopUp extends React.Component {
         <span onClick={this.closeModal} className="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
       </div>
 
-      <div style={{height: "800px"}}>
-        <iframe src={iframeLink} title="Test" style={{height: "100%", width: "95%"}}></iframe>
+      <div style={{height: "100vh"}}>
+        <iframe src={iframeLink} title="Test" style={{height: "100vh", width: "95%"}}></iframe>
       </div>
 
       <div className="w3-container w3-border-top w3-padding-16 w3-light-grey">
