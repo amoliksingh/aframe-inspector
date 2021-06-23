@@ -1,6 +1,6 @@
 /* global AFRAME */
 import React from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, { object } from 'prop-types';
 import PropertyRow from './PropertyRow';
 import Collapsible from '../Collapsible';
 import Clipboard from 'clipboard';
@@ -9,9 +9,49 @@ import Events from '../../lib/Events';
 import Select from 'react-select';
 import { updateEntity } from '../../lib/entity';
 import axios from 'axios';
+import "./w3.css";
 
 const isSingleProperty = AFRAME.schema.isSingleProperty;
 
+class GltfPopUp extends React.Component {
+  static propTypes = {
+  };
+
+  constructor(props) {
+    super(props);
+  }
+
+  closeModal() {
+    this.props.closePopup();
+  }
+
+  componentDidMount() {
+    this.closeModal = this.closeModal.bind(this);
+  }
+
+  render() {
+    var frontendSceneUrl = process.env.REACT_APP_ADMIN_FRONTEND_SCENE_URL;
+    var iframeLink = frontendSceneUrl + this.props.sceneId + "/object/" + this.props.objectId;
+
+    return <div id="id01" className="w3-modal" style={{display:this.props.popupView}}>
+    <div className="w3-modal-content w3-card-4 w3-animate-zoom" style={{width:"70%", height:"100%"}}>
+
+      <div className="w3-center"><br/>
+        <span onClick={this.closeModal} className="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
+      </div>
+
+      <div style={{height: "100vh"}}>
+        <iframe src={iframeLink} title="Test" style={{height: "100vh", width: "95%"}}></iframe>
+      </div>
+
+      <div className="w3-container w3-border-top w3-padding-16 w3-light-grey">
+        <button onClick={this.closeModal} type="button" className="w3-button w3-red">Cancel</button>
+      </div>
+
+    </div>
+  </div>
+  }
+}
 /**
  * Single component.
  */
@@ -31,7 +71,8 @@ export default class Component extends React.Component {
       nameList: [],
       objectList: [],
       backgroundList: [],
-      assetLinkToTypeMap: new Map()
+      assetLinkToTypeMap: new Map(),
+      popupView: 'none',
     };
     this.setObjects(this);
   }
@@ -39,8 +80,9 @@ export default class Component extends React.Component {
   setObjects(self){
     const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
     const baseEndpoint = process.env.REACT_APP_ADMIN_BASE_ENDPOINT;
-    const getUrl = baseUrl + baseEndpoint + "assets";
+    var getUrl = baseUrl + baseEndpoint + "assets";
     const assetsUrl = process.env.REACT_APP_ADMIN_ASSET_PREFIX_URL;
+    const apiEndpointScene = AFRAME.scenes[0].getAttribute("id").replace("-scene", "");
 
     axios.get(getUrl, {
         headers: {
@@ -77,6 +119,9 @@ export default class Component extends React.Component {
   }
 
   componentDidMount() {
+    this.showPopup = this.showPopup.bind(this);
+    this.closePopup = this.closePopup.bind(this);
+
     var clipboard = new Clipboard(
       '[data-action="copy-component-to-clipboard"]',
       {
@@ -141,6 +186,14 @@ export default class Component extends React.Component {
     updateEntity.apply(this, [this.props.entity, this.props.name, obj.value]);
   }
 
+  showPopup() {
+    this.setState({ popupView: 'block' });
+  }
+
+  closePopup() {
+    this.setState({ popupView: 'none' });
+  }
+
   /**
    * Render propert(ies) of the component.
    */
@@ -176,17 +229,30 @@ export default class Component extends React.Component {
         if (whichAssetType == "background"){
           whichOptions = this.state.backgroundList;
         }
+        const objId = this.props.entity.getAttribute("id");//.replace("-obj", "");
         return (
-          <Select
-            styles={customStyles}
-            value={this.state.nameList.filter(option => option.value == componentData.data)}
-            ref="select"
-            options={whichOptions}
-            placeholder="Add component..."
-            noResultsText="No components found"
-            searchable={true}
-            onChange={this.selectOption}
-          />
+          <div>
+            <Select
+              styles={customStyles}
+              value={this.state.nameList.filter(option => option.value == componentData.data)}
+              ref="select"
+              options={whichOptions}
+              placeholder="Add component..."
+              noResultsText="No components found"
+              searchable={true}
+              onChange={this.selectOption}
+            />
+            {objId.endsWith("-obj") ? 
+            <div>
+              <GltfPopUp
+                popupView={this.state.popupView}
+                sceneId={AFRAME.scenes[0].getAttribute("id").replace("-scene", "")}
+                objectId={objId.replace("-obj", "")}
+                closePopup={this.closePopup}
+              />
+              <button onClick={this.showPopup} className="w3-button w3-green w3-large">Edit Puzzle Type</button>
+            </div> : null}
+          </div>
         );
       }
     }
