@@ -397,7 +397,7 @@ export default class Toolbar extends React.Component {
     return (
       <div id="toolbar">
         <div className="toolbarActions">
-          <a
+          {/* <a
             className="button fa fa-plus"
             title="Add a new entity"
             onClick={this.addEntity}
@@ -406,7 +406,7 @@ export default class Toolbar extends React.Component {
             className={watcherClassNames}
             title={watcherTitle}
             onClick={this.writeChanges}
-          />
+          /> */}
         </div>
       </div>
     );
