@@ -379,13 +379,18 @@ export default class TransformToolbar extends React.Component {
     });
     const watcherTitle = 'Write changes with aframe-watcher.';
     return (
-      <div id="transformToolbar" className="toolbarButtons">
+      <div id="transformToolbar" className="toolbarButtons" style={{width: "250px"}}>
         {this.renderTransformButtons()}
-        <a
-            className={watcherClassNames}
-            title={watcherTitle}
-            onClick={this.writeChanges}
-          />
+          <button onClick={this.writeChanges} style={{position: "absolute",
+          height: "90%",
+          width: "120px",
+          marginTop: "2px",
+          lineHeight: "90%",
+          color: "white",
+          background: "#EC4E55",
+          borderRadius: "4px"}}>
+            Save Scene
+          </button>
         <span className="local-transform">
           <input
             id="local"
