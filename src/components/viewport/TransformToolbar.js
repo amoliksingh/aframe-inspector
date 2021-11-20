@@ -3,115 +3,13 @@ import axios from 'axios';
 var React = require('react');
 var Events = require('../../lib/Events.js');
 var classNames = require('classnames');
+import {updateObject, addObject, deleteObject, editBackground} from '../scenegraph/Toolbar.js';
 
 var TransformButtons = [
   { value: 'translate', icon: 'fa-arrows-alt' },
   { value: 'scale', icon: 'fa-expand' },
   { value: 'rotate', icon: 'fa-repeat' }
 ];
-
-function getCookie(name) {
-  const r = document.cookie.match("\\b" + name + "=([^;]*)\\b");
-  return r ? r[1] : undefined;
-}
-
-async function updateObject(putUrl, object, objectId){
-  axios.put(putUrl, object, {
-    headers: {
-        "Content-Type": "application/json",
-        "X-Xsrftoken": getCookie("_xsrf"),
-    }, withCredentials: true
-  })
-  .then(function (response) {
-    alert("Updated object with id: " + objectId);
-  })
-  .catch((error) => {
-    if (error.response){
-      alert("URL: " + putUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
-    } else if (error.request){
-      alert("No response from URL: " + putUrl);
-    } else{
-      alert(error.message);
-    }
-  });
-}
-
-async function addObject(postUrl, object, refToToolbar){
-  const objId = object.obj;
-  delete object.obj;
-  axios.post(postUrl, object, {
-    headers: {
-        "Content-Type": "application/json",
-        "X-Xsrftoken": getCookie("_xsrf"),
-    }, withCredentials: true
-  })
-  .then(function (response) {
-    let newObjectId = response.data.id;
-    let objects = refToToolbar.state.objects;
-    object["id"] = newObjectId;
-    objects.push(object);
-    refToToolbar.setState({ objects });
-    alert("Added new object with name: " + object.name + ", id: " + newObjectId);
-    let entity = document.getElementById(objId);
-    entity.id = newObjectId+"-obj";
-    Events.emit('entityidchange', entity);
-  })
-  .catch((error) => {
-    if (error.response){
-      alert("URL: " + postUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
-    } else if (error.request){
-      alert("No response from URL: " + postUrl);
-    } else{
-      alert(error.message);
-    }
-  });
-}
-
-async function deleteObject(deleteUrl, objectId){
-  axios.delete(deleteUrl, {
-    headers: {
-        "Content-Type": "application/json",
-        "X-Xsrftoken": getCookie("_xsrf"),
-    }, withCredentials: true
-  })
-  .then(function (response) {
-    alert("Deleted object with id: " + objectId);
-  })
-  .catch((error) => {
-    if (error.response){
-      alert("URL: " + deleteUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
-    } else if (error.request){
-      alert("No response from URL: " + deleteUrl);
-    } else{
-      alert(error.message);
-    }
-  });
-}
-
-async function editBackground(sceneUrl, sceneBody, backgroundModelChanged=false){
-  axios.put(sceneUrl, sceneBody, {
-    headers: {
-        "Content-Type": "application/json",
-        "X-Xsrftoken": getCookie("_xsrf"),
-      }, withCredentials: true
-    })
-  .then(function (response) {
-    alert("Changes to the background were saved");
-    // if background model changed, also need to update screenshot
-    if(backgroundModelChanged){
-      window.takeSceneScreenshot(response.data.s3_key);
-    }
-  })
-  .catch((error) => {
-    if (error.response){
-      alert("URL: " + sceneUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
-    } else if (error.request){
-      alert("No response from URL: " + sceneUrl);
-    } else{
-      alert(error.message);
-    }
-  });
-}
 
 export default class TransformToolbar extends React.Component {
   constructor(props) {
