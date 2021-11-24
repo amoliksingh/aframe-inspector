@@ -44,6 +44,10 @@ export default class CameraToolbar extends React.Component {
     Events.emit(option.event, option.payload);
   }
 
+  addEntity() {
+    Events.emit('entitycreate', { element: 'a-entity', components: {} });
+  }
+
   render() {
     return (
       <div id="cameraToolbar">
@@ -55,6 +59,11 @@ export default class CameraToolbar extends React.Component {
           value={getOption(this.state.selectedCamera)}
           isSearchable={false}
           onChange={this.onChange.bind(this)} />
+          <a
+            className="button fa fa-plus"
+            title="Add a new entity"
+            onClick={this.addEntity}
+          />
       </div>
     );
   }
