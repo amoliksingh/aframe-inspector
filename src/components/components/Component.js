@@ -280,8 +280,12 @@ export default class Component extends React.Component {
       componentName = componentName.substr(0, componentName.indexOf('__'));
     }
 
+    if (componentName !== "gltf-model") {
+      return null;
+    }
+
     return (
-      <Collapsible collapsed={this.props.isCollapsed}>
+      <Collapsible collapsed={false}>
         <div className="componentHeader collapsible-header">
           <span
             className="componentTitle"
