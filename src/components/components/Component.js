@@ -300,11 +300,6 @@ export default class Component extends React.Component {
               className="button fa fa-clipboard"
               href="#"
             />
-            <a
-              title="Remove component"
-              className="button fa fa-trash-o"
-              onClick={this.removeComponent}
-            />
           </div>
         </div>
         <div className="collapsible-content">{this.renderPropertyRows()}</div>
