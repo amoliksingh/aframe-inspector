@@ -33,15 +33,15 @@ class GltfPopUp extends React.Component {
     var frontendSceneUrl = process.env.REACT_APP_ADMIN_FRONTEND_SCENE_URL;
     var iframeLink = frontendSceneUrl + this.props.sceneId + "/object/" + this.props.objectId;
 
-    return <div id="id01" className="w3-modal" style={{display:this.props.popupView}}>
-    <div className="w3-modal-content w3-card-4 w3-animate-zoom" style={{width:"70%", height:"100%"}}>
+    return <div id="id01" className="w3-modal" style={{display:this.props.popupView, paddingTop: "5vh"}}>
+    <div className="w3-modal-content w3-card-4 w3-animate-zoom" style={{width:"70%"}}>
 
       <div className="w3-center"><br/>
-        <span onClick={this.closeModal} className="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
+        <span onClick={this.closeModal} className="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal" style={{color: "black"}}>&times;</span>
       </div>
 
-      <div style={{height: "100vh"}}>
-        <iframe src={iframeLink} title="Test" style={{height: "100vh", width: "95%"}}></iframe>
+      <div style={{height: "80vh"}}>
+        <iframe src={iframeLink} title="Test" style={{height: "80vh", width: "95%", marginBottom: "10vh"}}></iframe>
       </div>
 
       <div className="w3-container w3-border-top w3-padding-16 w3-light-grey">
@@ -243,14 +243,20 @@ export default class Component extends React.Component {
               onChange={this.selectOption}
             />
             {objId.endsWith("-obj") ? 
-            <div>
+            <div style={{display:"flex", justifyContent:"center"}}>
               <GltfPopUp
                 popupView={this.state.popupView}
                 sceneId={AFRAME.scenes[0].getAttribute("id").replace("-scene", "")}
                 objectId={objId.replace("-obj", "")}
                 closePopup={this.closePopup}
               />
-              <button onClick={this.showPopup} className="w3-button w3-green w3-large">Edit Puzzle Type</button>
+              <button onClick={this.showPopup} className="w3-button w3-large" style={{
+                background:"#BFCFE0",
+                borderRadius:"4px",
+                color:"black",
+                margin:"auto",
+                marginTop:"10px"
+              }}>Edit Puzzle Type</button>
             </div> : null}
           </div>
         );
@@ -280,8 +286,12 @@ export default class Component extends React.Component {
       componentName = componentName.substr(0, componentName.indexOf('__'));
     }
 
+    if (componentName !== "gltf-model") {
+      return null;
+    }
+
     return (
-      <Collapsible collapsed={this.props.isCollapsed}>
+      <Collapsible collapsed={false}>
         <div className="componentHeader collapsible-header">
           <span
             className="componentTitle"
@@ -295,11 +305,6 @@ export default class Component extends React.Component {
               data-component={subComponentName || componentName}
               className="button fa fa-clipboard"
               href="#"
-            />
-            <a
-              title="Remove component"
-              className="button fa fa-trash-o"
-              onClick={this.removeComponent}
             />
           </div>
         </div>
