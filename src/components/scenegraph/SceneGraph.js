@@ -251,7 +251,9 @@ export default class SceneGraph extends React.Component {
     return this.state.filteredEntities.map((entityOption, idx) => {
       if (
         !this.isVisibleInSceneGraph(entityOption.entity) &&
-        !this.state.filter
+        !this.state.filter ||
+        !entityOption.entity.id.endsWith("-obj") &&
+        !entityOption.entity.id.includes("@")
       ) {
         return null;
       }
