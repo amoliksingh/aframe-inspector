@@ -48,15 +48,15 @@ export const updateObject = async(putUrl, object, objectId) => {
     }, withCredentials: true
   })
   .then(function (response) {
-    alert("Updated object with id: " + objectId);
+    return "Updated object with id: " + objectId;
   })
   .catch((error) => {
     if (error.response){
-      alert("URL: " + putUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      return "Error:" + "URL: " + putUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message;
     } else if (error.request){
-      alert("No response from URL: " + putUrl);
+      return "Error:" + "No response from URL: " + putUrl;
     } else{
-      alert(error.message);
+      return "Error:" + error.message;
     }
   });
 }
@@ -76,18 +76,18 @@ export const addObject = async(postUrl, object, refToToolbar) => {
     object["id"] = newObjectId;
     objects.push(object);
     refToToolbar.setState({ objects });
-    alert("Added new object with name: " + object.name + ", id: " + newObjectId);
     let entity = document.getElementById(objId);
     entity.id = newObjectId+"-obj";
     Events.emit('entityidchange', entity);
+    return "Added new object with name: " + object.name + ", id: " + newObjectId;
   })
   .catch((error) => {
     if (error.response){
-      alert("URL: " + postUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      return "Error:" + "URL: " + postUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message;
     } else if (error.request){
-      alert("No response from URL: " + postUrl);
+      return "Error:" + "No response from URL: " + postUrl;
     } else{
-      alert(error.message);
+      return "Error:" + error.message;
     }
   });
 }
@@ -100,15 +100,15 @@ export const deleteObject = async(deleteUrl, objectId) => {
     }, withCredentials: true
   })
   .then(function (response) {
-    alert("Deleted object with id: " + objectId);
+    return "Deleted object with id: " + objectId;
   })
   .catch((error) => {
     if (error.response){
-      alert("URL: " + deleteUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      return "Error:" + "URL: " + deleteUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message;
     } else if (error.request){
-      alert("No response from URL: " + deleteUrl);
+      return "Error:" + "No response from URL: " + deleteUrl;
     } else{
-      alert(error.message);
+      return "Error:" + error.message;
     }
   });
 }
@@ -121,19 +121,19 @@ export const editBackground = async(sceneUrl, sceneBody, backgroundModelChanged=
       }, withCredentials: true
     })
   .then(function (response) {
-    alert("Changes to the background were saved");
     // if background model changed, also need to update screenshot
     if(backgroundModelChanged){
       window.takeSceneScreenshot(response.data.s3_key);
     }
+    return "Changes to the background were saved";
   })
   .catch((error) => {
     if (error.response){
-      alert("URL: " + sceneUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      return "Error:" + "URL: " + sceneUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message;
     } else if (error.request){
-      alert("No response from URL: " + sceneUrl);
+      return "Error:" + "No response from URL: " + sceneUrl;
     } else{
-      alert(error.message);
+      return "Error:" + error.message;
     }
   });
 }

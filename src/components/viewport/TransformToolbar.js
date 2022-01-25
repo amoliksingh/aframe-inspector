@@ -1,5 +1,7 @@
 import classnames from 'classnames';
 import axios from 'axios';
+// import Snackbar from '@mui/material/Snackbar';
+// import MuiAlert from '@mui/material/Alert';
 var React = require('react');
 var Events = require('../../lib/Events.js');
 var classNames = require('classnames');
@@ -11,6 +13,10 @@ var TransformButtons = [
   { value: 'rotate', icon: 'fa-repeat' }
 ];
 
+// const Alert = React.forwardRef(function Alert(props, ref) {
+//   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+// });
+
 export default class TransformToolbar extends React.Component {
   constructor(props) {
     super(props);
@@ -19,7 +25,11 @@ export default class TransformToolbar extends React.Component {
       localSpace: false,
       objects: [],
       linkToIdMap: null,
-      sceneBody: null
+      sceneBody: null,
+      showSuccess: false,
+      successText: "",
+      showError: false,
+      errorText: ""
     };
     this.getRequests(this);
   }
@@ -126,12 +136,12 @@ export default class TransformToolbar extends React.Component {
         }
         if (hasChanged){
           this.setState({ sceneBody });
-          editBackground(getUrl, sceneBody, backgroundModelChanged);
+          let msg = editBackground(getUrl, sceneBody, backgroundModelChanged);
         }
       } else if (id.endsWith("-obj")){
         if ("delete" in AFRAME.INSPECTOR.history.updates[id]){
           const deleteUrl = baseUrl + baseEndpoint + "scene/" + apiEndpointScene + "/object/" + id.replace("-obj", "");
-          deleteObject(deleteUrl, id.replace("-obj", ""));
+          let msg = deleteObject(deleteUrl, id.replace("-obj", ""));
         } else{
           objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
         }
@@ -164,7 +174,7 @@ export default class TransformToolbar extends React.Component {
         }
         const postUrl = getUrl + "/object";
         basicObject.obj = id;
-        addObject(postUrl, basicObject, this);
+        let msg = addObject(postUrl, basicObject, this);
         // here is where we want to create a new object
         // first strip the name's suffix (<>-!) - make sure to save the suffix
         // POST request to backend - this endpoint returns the entire object JSON
@@ -210,7 +220,7 @@ export default class TransformToolbar extends React.Component {
           const curId = objects[i].id;
           delete objects[i].id;
           delete objects[i].asset_details;
-          updateObject(putUrl, objects[i], curId);
+          let msg = updateObject(putUrl, objects[i], curId);
           objects[i].id = curId;
         }
         j++;
@@ -276,6 +286,13 @@ export default class TransformToolbar extends React.Component {
       'fa-save': true
     });
     const watcherTitle = 'Write changes with aframe-watcher.';
+    const handleSuccessClose = (event, reason) => {
+      if (reason === 'clickaway') {
+        return;
+      }
+  
+      this.setState({showSuccess: false});
+    };
     return (
       <div id="transformToolbar" className="toolbarButtons" style={{width: "250px"}}>
         {this.renderTransformButtons()}
@@ -307,6 +324,25 @@ export default class TransformToolbar extends React.Component {
             local
           </label>
         </span>
+        {/* <button onClick={this.setState({showSuccess: true})}>
+        Open success snackbar
+      </button>
+        <Snackbar
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                open={this.state.showSuccess}
+                autoHideDuration={2000}
+                onClose={handleSuccessClose}
+                style={{
+                  position: "flex",
+                  bottom: 25,
+                  right: 25,
+                  minWidth: "max-content"
+                }}
+              >
+                <Alert onClose={handleSuccessClose} severity="success" sx={{ width: '100%' }}>
+          This is a success message!
+        </Alert>
+              </Snackbar> */}
       </div>
     );
   }
