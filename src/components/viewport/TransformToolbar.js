@@ -256,25 +256,25 @@ export default class TransformToolbar extends React.Component {
     let msg2 = "";
     let msg3 = "";
     if (!hasFail && addedObjects.length > 0){
-      msg1 = "Added new objects with ids: " + addedObjects.toString();
-      if (addedObjects.length == 1){
-        msg1 = "Added new object with id: " + addedObjects.toString();
-      }
+      msg1 = "added " + addedObjects.toString();
     }
     if (!hasFail && updatedObjects.length > 0){
-      msg2 = "Updated objects with ids: " + updatedObjects.toString();
-      if (updatedObjects.length == 1){
-        msg2 = "Updated object with id: " + updatedObjects.toString();
-      }
+      msg2 = "updated " + updatedObjects.toString();
     }
     if (!hasFail && deletedObjects.length > 0){
-      msg3 = "Deleted objects with ids: " + deletedObjects.toString();
-      if (deletedObjects.length == 1){
-        msg3 = "Deleted object with id: " + deletedObjects.toString();
-      }
+      msg3 = "deleted " + deletedObjects.toString();
     }
-    let msg = msg1 + "\t" + msg2 + "\t" + msg3;
-    if (!hasFail){
+    let msg = msg1;
+    if (msg != "" && msg2 != ""){
+      msg += ", ";
+    }
+    msg += msg2;
+    if (msg != "" && msg3 != ""){
+      msg += ", ";
+    }
+    msg += msg3;
+    if (!hasFail && msg != ""){
+      msg = "Object ID changes: " + msg;
       this.setState({ msg });
     }
     setInterval(this.clearMsg, 5000);
