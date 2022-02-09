@@ -41,30 +41,31 @@ function slugify(text) {
 }
 
 export const updateObject = async(putUrl, object, objectId) => {
-  axios.put(putUrl, object, {
+  const response = await axios.put(putUrl, object, {
     headers: {
         "Content-Type": "application/json",
         "X-Xsrftoken": getCookie("_xsrf"),
     }, withCredentials: true
   })
   .then(function (response) {
-    return "Updated object with id: " + objectId;
+    return "" + objectId;
   })
   .catch((error) => {
     if (error.response){
-      return "Error:" + "URL: " + putUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message;
+      return "Error: " + error.response.data.message;
     } else if (error.request){
-      return "Error:" + "No response from URL: " + putUrl;
+      return "Error: " + "No response from URL: " + putUrl;
     } else{
-      return "Error:" + error.message;
+      return "Error: " + error.message;
     }
   });
+  return response;
 }
 
 export const addObject = async(postUrl, object, refToToolbar) => {
   const objId = object.obj;
   delete object.obj;
-  axios.post(postUrl, object, {
+  const response = await axios.post(postUrl, object, {
     headers: {
         "Content-Type": "application/json",
         "X-Xsrftoken": getCookie("_xsrf"),
@@ -79,42 +80,46 @@ export const addObject = async(postUrl, object, refToToolbar) => {
     let entity = document.getElementById(objId);
     entity.id = newObjectId+"-obj";
     Events.emit('entityidchange', entity);
-    return "Added new object with name: " + object.name + ", id: " + newObjectId;
+    // return "Added new object with name: " + object.name + ", id: " + newObjectId;
+    return "" + newObjectId;
   })
   .catch((error) => {
     if (error.response){
-      return "Error:" + "URL: " + postUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message;
+      return "Error: " + error.response.data.message;
     } else if (error.request){
-      return "Error:" + "No response from URL: " + postUrl;
+      return "Error: " + "No response from URL: " + postUrl;
     } else{
-      return "Error:" + error.message;
+      return "Error: " + error.message;
     }
   });
+  return response;
 }
 
 export const deleteObject = async(deleteUrl, objectId) => {
-  axios.delete(deleteUrl, {
+  const response = await axios.delete(deleteUrl, {
     headers: {
         "Content-Type": "application/json",
         "X-Xsrftoken": getCookie("_xsrf"),
     }, withCredentials: true
   })
   .then(function (response) {
-    return "Deleted object with id: " + objectId;
+    // return "Deleted object with id: " + objectId;
+    return "" + objectId;
   })
   .catch((error) => {
     if (error.response){
-      return "Error:" + "URL: " + deleteUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message;
+      return "Error: " + error.response.data.message;
     } else if (error.request){
-      return "Error:" + "No response from URL: " + deleteUrl;
+      return "Error: " + "No response from URL: " + deleteUrl;
     } else{
-      return "Error:" + error.message;
+      return "Error: " + error.message;
     }
   });
+  return response;
 }
 
 export const editBackground = async(sceneUrl, sceneBody, backgroundModelChanged=false) => {
-  axios.put(sceneUrl, sceneBody, {
+  const response = await axios.put(sceneUrl, sceneBody, {
     headers: {
         "Content-Type": "application/json",
         "X-Xsrftoken": getCookie("_xsrf"),
@@ -129,13 +134,14 @@ export const editBackground = async(sceneUrl, sceneBody, backgroundModelChanged=
   })
   .catch((error) => {
     if (error.response){
-      return "Error:" + "URL: " + sceneUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message;
+      return "Error: " + error.response.data.message;
     } else if (error.request){
-      return "Error:" + "No response from URL: " + sceneUrl;
+      return "Error: " + "No response from URL: " + sceneUrl;
     } else{
-      return "Error:" + error.message;
+      return "Error: " + error.message;
     }
   });
+  return response;
 }
 
 /**

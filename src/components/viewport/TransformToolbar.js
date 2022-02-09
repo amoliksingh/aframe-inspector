@@ -29,7 +29,8 @@ export default class TransformToolbar extends React.Component {
       showSuccess: false,
       successText: "",
       showError: false,
-      errorText: ""
+      errorText: "",
+      msg: ""
     };
     this.getRequests(this);
   }
@@ -93,7 +94,7 @@ export default class TransformToolbar extends React.Component {
     });
   }
 
-  writeChanges = () => {
+  writeChanges = async() => {
     const baseUrl = process.env.REACT_APP_ADMIN_BACKEND_URL;
     const apiEndpointScene = AFRAME.scenes[0].getAttribute("id").replace("-scene", "");
     const baseEndpoint = process.env.REACT_APP_ADMIN_BASE_ENDPOINT;
@@ -110,6 +111,10 @@ export default class TransformToolbar extends React.Component {
         }
       }
     }
+
+    let hasFail = false;
+    let addedObjects = [];
+    let deletedObjects = [];
 
     // perform changes / add changes to objectChanges object
     for(var id in AFRAME.INSPECTOR.history.updates){
@@ -136,12 +141,19 @@ export default class TransformToolbar extends React.Component {
         }
         if (hasChanged){
           this.setState({ sceneBody });
-          let msg = editBackground(getUrl, sceneBody, backgroundModelChanged);
+          let msg = await editBackground(getUrl, sceneBody, backgroundModelChanged);
+          this.setState({ msg });
         }
       } else if (id.endsWith("-obj")){
         if ("delete" in AFRAME.INSPECTOR.history.updates[id]){
           const deleteUrl = baseUrl + baseEndpoint + "scene/" + apiEndpointScene + "/object/" + id.replace("-obj", "");
-          let msg = deleteObject(deleteUrl, id.replace("-obj", ""));
+          let msg = await deleteObject(deleteUrl, id.replace("-obj", ""));
+          if (!msg.startsWith("Error: ")){
+            deletedObjects.push(msg);
+          } else {
+            hasFail = true;
+            this.setState({ msg });
+          }
         } else{
           objectChanges.push([parseInt(id.replace("-obj", "")), AFRAME.INSPECTOR.history.updates[id]]);
         }
@@ -174,7 +186,13 @@ export default class TransformToolbar extends React.Component {
         }
         const postUrl = getUrl + "/object";
         basicObject.obj = id;
-        let msg = addObject(postUrl, basicObject, this);
+        let msg = await addObject(postUrl, basicObject, this);
+        if (!msg.startsWith("Error: ")){
+          addedObjects.push(msg);
+        } else {
+          hasFail = true;
+          this.setState({ msg });
+        }
         // here is where we want to create a new object
         // first strip the name's suffix (<>-!) - make sure to save the suffix
         // POST request to backend - this endpoint returns the entire object JSON
@@ -196,6 +214,7 @@ export default class TransformToolbar extends React.Component {
 
     let i = 0;
     let j = 0;
+    let updatedObjects = [];
     while(i < objects.length && j < objectChanges.length){
       if (objects[i].id == objectChanges[j][0]){
         let hasChanged = false;
@@ -220,15 +239,52 @@ export default class TransformToolbar extends React.Component {
           const curId = objects[i].id;
           delete objects[i].id;
           delete objects[i].asset_details;
-          let msg = updateObject(putUrl, objects[i], curId);
+          let msg = await updateObject(putUrl, objects[i], curId);
+          if (!msg.startsWith("Error: ")){
+            updatedObjects.push(msg);
+          } else {
+            hasFail = true;
+            this.setState({ msg });
+          }
           objects[i].id = curId;
         }
         j++;
       }
       i++;
     }
+    let msg1 = "";
+    let msg2 = "";
+    let msg3 = "";
+    if (!hasFail && addedObjects.length > 0){
+      msg1 = "Added new objects with ids: " + addedObjects.toString();
+      if (addedObjects.length == 1){
+        msg1 = "Added new object with id: " + addedObjects.toString();
+      }
+    }
+    if (!hasFail && updatedObjects.length > 0){
+      msg2 = "Updated objects with ids: " + updatedObjects.toString();
+      if (updatedObjects.length == 1){
+        msg2 = "Updated object with id: " + updatedObjects.toString();
+      }
+    }
+    if (!hasFail && deletedObjects.length > 0){
+      msg3 = "Deleted objects with ids: " + deletedObjects.toString();
+      if (deletedObjects.length == 1){
+        msg3 = "Deleted object with id: " + deletedObjects.toString();
+      }
+    }
+    let msg = msg1 + "\t" + msg2 + "\t" + msg3;
+    if (!hasFail){
+      this.setState({ msg });
+    }
+    setInterval(this.clearMsg, 5000);
     this.setState({ objects });
   };
+
+  clearMsg = async() => {
+    let msg = "";
+    this.setState({ msg });
+  }
 
   componentDidMount() {
     Events.on('transformmodechange', mode => {
@@ -294,7 +350,8 @@ export default class TransformToolbar extends React.Component {
       this.setState({showSuccess: false});
     };
     return (
-      <div id="transformToolbar" className="toolbarButtons" style={{width: "250px"}}>
+      <div id="transformToolbar" className="toolbarButtons" style={{width: "fit-content", marginRight: "50px"}}>
+      <span id="modifyThis">{this.state.msg}</span>
         {this.renderTransformButtons()}
           <button onClick={this.writeChanges} style={{position: "absolute",
           height: "90%",
