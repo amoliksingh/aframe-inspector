@@ -1,7 +1,5 @@
 import classnames from 'classnames';
 import axios from 'axios';
-// import Snackbar from '@mui/material/Snackbar';
-// import MuiAlert from '@mui/material/Alert';
 var React = require('react');
 var Events = require('../../lib/Events.js');
 var classNames = require('classnames');
@@ -12,10 +10,6 @@ var TransformButtons = [
   { value: 'scale', icon: 'fa-expand' },
   { value: 'rotate', icon: 'fa-repeat' }
 ];
-
-// const Alert = React.forwardRef(function Alert(props, ref) {
-//   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
-// });
 
 export default class TransformToolbar extends React.Component {
   constructor(props) {
@@ -381,25 +375,6 @@ export default class TransformToolbar extends React.Component {
             local
           </label>
         </span>
-        {/* <button onClick={this.setState({showSuccess: true})}>
-        Open success snackbar
-      </button>
-        <Snackbar
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                open={this.state.showSuccess}
-                autoHideDuration={2000}
-                onClose={handleSuccessClose}
-                style={{
-                  position: "flex",
-                  bottom: 25,
-                  right: 25,
-                  minWidth: "max-content"
-                }}
-              >
-                <Alert onClose={handleSuccessClose} severity="success" sx={{ width: '100%' }}>
-          This is a success message!
-        </Alert>
-              </Snackbar> */}
       </div>
     );
   }
