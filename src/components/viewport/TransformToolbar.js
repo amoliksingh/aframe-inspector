@@ -277,11 +277,11 @@ export default class TransformToolbar extends React.Component {
       msg = "Object ID changes: " + msg;
       this.setState({ msg });
     }
-    setInterval(this.clearMsg, 5000);
     this.setState({ objects });
+    setTimeout(this.clearMsg, 5000);
   };
 
-  clearMsg = async() => {
+  clearMsg = () => {
     let msg = "";
     this.setState({ msg });
   }
