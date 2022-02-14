@@ -41,30 +41,31 @@ function slugify(text) {
 }
 
 export const updateObject = async(putUrl, object, objectId) => {
-  axios.put(putUrl, object, {
+  const response = await axios.put(putUrl, object, {
     headers: {
         "Content-Type": "application/json",
         "X-Xsrftoken": getCookie("_xsrf"),
     }, withCredentials: true
   })
   .then(function (response) {
-    alert("Updated object with id: " + objectId);
+    return "" + objectId;
   })
   .catch((error) => {
     if (error.response){
-      alert("URL: " + putUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      return "Error: " + error.response.data.message;
     } else if (error.request){
-      alert("No response from URL: " + putUrl);
+      return "Error: " + "No response from URL: " + putUrl;
     } else{
-      alert(error.message);
+      return "Error: " + error.message;
     }
   });
+  return response;
 }
 
 export const addObject = async(postUrl, object, refToToolbar) => {
   const objId = object.obj;
   delete object.obj;
-  axios.post(postUrl, object, {
+  const response = await axios.post(postUrl, object, {
     headers: {
         "Content-Type": "application/json",
         "X-Xsrftoken": getCookie("_xsrf"),
@@ -76,66 +77,69 @@ export const addObject = async(postUrl, object, refToToolbar) => {
     object["id"] = newObjectId;
     objects.push(object);
     refToToolbar.setState({ objects });
-    alert("Added new object with name: " + object.name + ", id: " + newObjectId);
     let entity = document.getElementById(objId);
     entity.id = newObjectId+"-obj";
     Events.emit('entityidchange', entity);
+    return "" + newObjectId;
   })
   .catch((error) => {
     if (error.response){
-      alert("URL: " + postUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      return "Error: " + error.response.data.message;
     } else if (error.request){
-      alert("No response from URL: " + postUrl);
+      return "Error: " + "No response from URL: " + postUrl;
     } else{
-      alert(error.message);
+      return "Error: " + error.message;
     }
   });
+  return response;
 }
 
 export const deleteObject = async(deleteUrl, objectId) => {
-  axios.delete(deleteUrl, {
+  const response = await axios.delete(deleteUrl, {
     headers: {
         "Content-Type": "application/json",
         "X-Xsrftoken": getCookie("_xsrf"),
     }, withCredentials: true
   })
   .then(function (response) {
-    alert("Deleted object with id: " + objectId);
+    return "" + objectId;
   })
   .catch((error) => {
     if (error.response){
-      alert("URL: " + deleteUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      return "Error: " + error.response.data.message;
     } else if (error.request){
-      alert("No response from URL: " + deleteUrl);
+      return "Error: " + "No response from URL: " + deleteUrl;
     } else{
-      alert(error.message);
+      return "Error: " + error.message;
     }
   });
+  return response;
 }
 
 export const editBackground = async(sceneUrl, sceneBody, backgroundModelChanged=false) => {
-  axios.put(sceneUrl, sceneBody, {
+  const response = await axios.put(sceneUrl, sceneBody, {
     headers: {
         "Content-Type": "application/json",
         "X-Xsrftoken": getCookie("_xsrf"),
       }, withCredentials: true
     })
   .then(function (response) {
-    alert("Changes to the background were saved");
     // if background model changed, also need to update screenshot
     if(backgroundModelChanged){
       window.takeSceneScreenshot(response.data.s3_key);
     }
+    return "Changes to the background were saved";
   })
   .catch((error) => {
     if (error.response){
-      alert("URL: " + sceneUrl + "\nTitle: " + error.response.data.title + "\nMessage: " + error.response.data.message);
+      return "Error: " + error.response.data.message;
     } else if (error.request){
-      alert("No response from URL: " + sceneUrl);
+      return "Error: " + "No response from URL: " + sceneUrl;
     } else{
-      alert(error.message);
+      return "Error: " + error.message;
     }
   });
+  return response;
 }
 
 /**

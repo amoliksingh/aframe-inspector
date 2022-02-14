@@ -253,8 +253,7 @@ export default class SceneGraph extends React.Component {
         (!this.isVisibleInSceneGraph(entityOption.entity) &&
         !this.state.filter) ||
         (!entityOption.entity.id.endsWith("-obj") &&
-        !entityOption.entity.id.includes("@") &&
-        !entityOption.entity.id.endsWith("-background"))
+        !entityOption.entity.id.includes("@"))
       ) {
         return null;
       }
