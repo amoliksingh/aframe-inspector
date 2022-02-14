@@ -80,7 +80,6 @@ export const addObject = async(postUrl, object, refToToolbar) => {
     let entity = document.getElementById(objId);
     entity.id = newObjectId+"-obj";
     Events.emit('entityidchange', entity);
-    // return "Added new object with name: " + object.name + ", id: " + newObjectId;
     return "" + newObjectId;
   })
   .catch((error) => {
@@ -103,7 +102,6 @@ export const deleteObject = async(deleteUrl, objectId) => {
     }, withCredentials: true
   })
   .then(function (response) {
-    // return "Deleted object with id: " + objectId;
     return "" + objectId;
   })
   .catch((error) => {
