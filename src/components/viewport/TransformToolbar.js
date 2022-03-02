@@ -97,7 +97,6 @@ export default class TransformToolbar extends React.Component {
     let objects = this.state.objects;
     let objectChanges = [];
 
-    console.log(AFRAME.INSPECTOR.history.updates);
     if (AFRAME.INSPECTOR.history.updates && Object.keys(AFRAME.INSPECTOR.history.updates).length === 0 && Object.getPrototypeOf(AFRAME.INSPECTOR.history.updates) === Object.prototype){
       let msg = "No changes made";
       this.setState({ msg });
@@ -367,24 +366,6 @@ export default class TransformToolbar extends React.Component {
           borderRadius: "4px"}}>
             Save Scene
           </button>
-        <span className="local-transform">
-          <input
-            id="local"
-            type="checkbox"
-            title="Toggle between local and world space transforms"
-            checked={
-              this.state.localSpace || this.state.selectedTransform === 'scale'
-            }
-            disabled={this.state.selectedTransform === 'scale'}
-            onChange={this.onLocalChange}
-          />
-          <label
-            htmlFor="local"
-            title="Toggle between local and world space transforms"
-          >
-            local
-          </label>
-        </span>
       </div>
     );
   }

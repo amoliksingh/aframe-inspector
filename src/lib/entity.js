@@ -604,8 +604,12 @@ export function printEntity(entity, onDoubleClick) {
 export function createEntity(definition, cb) {
   const re = /^[\'a-zA-Z0-9 _-]{1,50}$/;
   let objName = "";
-  while(objName == "" || !re.test(objName)){
+  while(objName == ""){
     objName = prompt("Enter the name of the object");
+    if (!re.test(objName)) {
+      alert("Please enter a name with only alphanumeric, space, underscore, or dash characters only");
+      objName = "";
+    }
   }
 
   if (objName != null){
