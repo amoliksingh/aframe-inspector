@@ -101,7 +101,7 @@ export default class TransformToolbar extends React.Component {
     if (AFRAME.INSPECTOR.history.updates && Object.keys(AFRAME.INSPECTOR.history.updates).length === 0 && Object.getPrototypeOf(AFRAME.INSPECTOR.history.updates) === Object.prototype){
       let msg = "No changes made";
       this.setState({ msg });
-      setTimeout(this.clearMsg, 5000);
+      setTimeout(this.clearMsg, 10000);
       return;
     }
     // validation of changes
@@ -109,8 +109,7 @@ export default class TransformToolbar extends React.Component {
       if (id.includes("@")) {
         if (!("gltf-model" in AFRAME.INSPECTOR.history.updates[id]) || AFRAME.INSPECTOR.history.updates[id]['gltf-model'] == ""){
           let msg = "Error: Save failed, please select an asset for the new object(s)";
-          this.setState({ msg });
-          setTimeout(this.clearMsg, 5000);
+          alert(msg);
           return;
         }
       }
@@ -283,7 +282,7 @@ export default class TransformToolbar extends React.Component {
       this.setState({ msg });
     }
     this.setState({ objects });
-    setTimeout(this.clearMsg, 5000);
+    setTimeout(this.clearMsg, 10000);
   };
 
   clearMsg = () => {
