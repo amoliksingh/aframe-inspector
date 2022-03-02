@@ -3,7 +3,8 @@ import axios from 'axios';
 var React = require('react');
 var Events = require('../../lib/Events.js');
 var classNames = require('classnames');
-import {updateObject, addObject, deleteObject, editBackground} from '../scenegraph/Toolbar.js';
+import {updateObject, addObject, deleteObject} from '../scenegraph/Toolbar.js';
+// import {updateObject, addObject, deleteObject, editBackground} from '../scenegraph/Toolbar.js';
 
 var TransformButtons = [
   { value: 'translate', icon: 'fa-arrows-alt' },
@@ -96,11 +97,20 @@ export default class TransformToolbar extends React.Component {
     let objects = this.state.objects;
     let objectChanges = [];
 
+    console.log(AFRAME.INSPECTOR.history.updates);
+    if (AFRAME.INSPECTOR.history.updates && Object.keys(AFRAME.INSPECTOR.history.updates).length === 0 && Object.getPrototypeOf(AFRAME.INSPECTOR.history.updates) === Object.prototype){
+      let msg = "No changes made";
+      this.setState({ msg });
+      setTimeout(this.clearMsg, 5000);
+      return;
+    }
     // validation of changes
     for(var id in AFRAME.INSPECTOR.history.updates){
       if (id.includes("@")) {
         if (!("gltf-model" in AFRAME.INSPECTOR.history.updates[id]) || AFRAME.INSPECTOR.history.updates[id]['gltf-model'] == ""){
-          alert("Error: Save failed, Please provide gltf-model for object with name: " + id + "\nNo changes were made, please fix errors before saving");
+          let msg = "Error: Save failed, please select an asset for the new object(s)";
+          this.setState({ msg });
+          setTimeout(this.clearMsg, 5000);
           return;
         }
       }
@@ -112,33 +122,34 @@ export default class TransformToolbar extends React.Component {
 
     // perform changes / add changes to objectChanges object
     for(var id in AFRAME.INSPECTOR.history.updates){
-      if (id.endsWith("-background")){
-        let sceneBody = this.state.sceneBody;
-        let hasChanged = false;
-        let backgroundModelChanged = false;
-        const changes = AFRAME.INSPECTOR.history.updates[id];
-        for (const prop in changes){
-          if (prop == "position" || prop == "scale" || prop == "rotation"){
-            const newPropArr = changes[prop].split(" ").map(Number);
-            if (JSON.stringify(sceneBody[prop]) != JSON.stringify(newPropArr)){
-              hasChanged = true;
-              sceneBody[prop] = newPropArr;
-            }
-          } else if (prop == "gltf-model"){
-            const newAssetId = this.state.linkToIdMap[changes[prop]];
-            if (sceneBody["background_id"] != newAssetId){
-              hasChanged = true;
-              backgroundModelChanged = true;
-              sceneBody["background_id"] = newAssetId;
-            }
-          }
-        }
-        if (hasChanged){
-          this.setState({ sceneBody });
-          let msg = await editBackground(getUrl, sceneBody, backgroundModelChanged);
-          this.setState({ msg });
-        }
-      } else if (id.endsWith("-obj")){
+      // if (id.endsWith("-background")){
+      //   let sceneBody = this.state.sceneBody;
+      //   let hasChanged = false;
+      //   let backgroundModelChanged = false;
+      //   const changes = AFRAME.INSPECTOR.history.updates[id];
+      //   for (const prop in changes){
+      //     if (prop == "position" || prop == "scale" || prop == "rotation"){
+      //       const newPropArr = changes[prop].split(" ").map(Number);
+      //       if (JSON.stringify(sceneBody[prop]) != JSON.stringify(newPropArr)){
+      //         hasChanged = true;
+      //         sceneBody[prop] = newPropArr;
+      //       }
+      //     } else if (prop == "gltf-model"){
+      //       const newAssetId = this.state.linkToIdMap[changes[prop]];
+      //       if (sceneBody["background_id"] != newAssetId){
+      //         hasChanged = true;
+      //         backgroundModelChanged = true;
+      //         sceneBody["background_id"] = newAssetId;
+      //       }
+      //     }
+      //   }
+      //   if (hasChanged){
+      //     this.setState({ sceneBody });
+      //     let msg = await editBackground(getUrl, sceneBody, backgroundModelChanged);
+      //     this.setState({ msg });
+      //   }
+      // } else
+      if (id.endsWith("-obj")){
         if ("delete" in AFRAME.INSPECTOR.history.updates[id]){
           const deleteUrl = baseUrl + baseEndpoint + "scene/" + apiEndpointScene + "/object/" + id.replace("-obj", "");
           let msg = await deleteObject(deleteUrl, id.replace("-obj", ""));

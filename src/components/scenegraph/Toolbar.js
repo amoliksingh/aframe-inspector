@@ -116,31 +116,31 @@ export const deleteObject = async(deleteUrl, objectId) => {
   return response;
 }
 
-export const editBackground = async(sceneUrl, sceneBody, backgroundModelChanged=false) => {
-  const response = await axios.put(sceneUrl, sceneBody, {
-    headers: {
-        "Content-Type": "application/json",
-        "X-Xsrftoken": getCookie("_xsrf"),
-      }, withCredentials: true
-    })
-  .then(function (response) {
-    // if background model changed, also need to update screenshot
-    if(backgroundModelChanged){
-      window.takeSceneScreenshot(response.data.s3_key);
-    }
-    return "Changes to the background were saved";
-  })
-  .catch((error) => {
-    if (error.response){
-      return "Error: " + error.response.data.message;
-    } else if (error.request){
-      return "Error: " + "No response from URL: " + sceneUrl;
-    } else{
-      return "Error: " + error.message;
-    }
-  });
-  return response;
-}
+// export const editBackground = async(sceneUrl, sceneBody, backgroundModelChanged=false) => {
+//   const response = await axios.put(sceneUrl, sceneBody, {
+//     headers: {
+//         "Content-Type": "application/json",
+//         "X-Xsrftoken": getCookie("_xsrf"),
+//       }, withCredentials: true
+//     })
+//   .then(function (response) {
+//     // if background model changed, also need to update screenshot
+//     if(backgroundModelChanged){
+//       window.takeSceneScreenshot(response.data.s3_key);
+//     }
+//     return "Changes to the background were saved";
+//   })
+//   .catch((error) => {
+//     if (error.response){
+//       return "Error: " + error.response.data.message;
+//     } else if (error.request){
+//       return "Error: " + "No response from URL: " + sceneUrl;
+//     } else{
+//       return "Error: " + error.message;
+//     }
+//   });
+//   return response;
+// }
 
 /**
  * Tools and actions.

@@ -602,8 +602,9 @@ export function printEntity(entity, onDoubleClick) {
  * @return {Element} Entity created
  */
 export function createEntity(definition, cb) {
+  const re = /^[\'a-zA-Z0-9 _-]{1,50}$/;
   let objName = "";
-  while(objName == ""){
+  while(objName == "" || !re.test(objName)){
     objName = prompt("Enter the name of the object");
   }
 
