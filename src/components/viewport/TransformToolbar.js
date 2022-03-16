@@ -353,7 +353,7 @@ export default class TransformToolbar extends React.Component {
       this.setState({showSuccess: false});
     };
     return (
-      <div id="transformToolbar" className="toolbarButtons" style={{width: "fit-content", marginRight: "50px"}}>
+      <div id="transformToolbar" className="toolbarButtons" style={{width: "fit-content", marginRight: "150px"}}>
       <span id="modifyThis">{this.state.msg}</span>
         {this.renderTransformButtons()}
           <button onClick={this.writeChanges} style={{position: "absolute",
